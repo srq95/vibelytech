@@ -205,6 +205,27 @@ html[data-loading="true"] body {
     inset 0 1px 0 0 var(--glass-highlight);
 }
 
+/* Marquee words — ghost outline that fills with the brand gradient on hover,
+   filled words pick up a soft brand glow. */
+.marquee-word {
+  transition:
+    filter 0.4s ease,
+    -webkit-text-stroke-color 0.45s ease;
+}
+.marquee-word:hover {
+  filter: drop-shadow(0 6px 22px var(--glow));
+}
+.marquee-stroke {
+  color: transparent;
+  -webkit-text-stroke: 1.5px color-mix(in oklab, var(--foreground) 34%, transparent);
+}
+.marquee-stroke:hover {
+  -webkit-text-stroke-color: transparent;
+  background-image: linear-gradient(115deg, var(--brand-start), var(--brand-end));
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
 .grain {
   position: absolute;
   inset: 0;
