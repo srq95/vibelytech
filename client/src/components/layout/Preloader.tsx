@@ -128,9 +128,11 @@ export default function Preloader() {
         isExiting && "pointer-events-none",
       )}
       style={{
-        // Solid deep-navy radial painted immediately — no blank/white flash.
+        // Theme-aware radial painted immediately — no blank/white flash.
+        // Dark: deep navy (var values resolve to #0b1120 → #060912).
+        // Light: clean surface → white, so text stays readable in light mode.
         background:
-          "radial-gradient(circle at 50% 38%, #0b1120 0%, #060912 72%)",
+          "radial-gradient(circle at 50% 38%, var(--surface) 0%, var(--background) 75%)",
         willChange: "clip-path, opacity",
       }}
     >
@@ -156,7 +158,7 @@ export default function Preloader() {
         <Logo withWord wordClassName="text-2xl" />
 
         {/* Thin progress track + brand-gradient fill. */}
-        <div className="h-px w-full overflow-hidden rounded-full bg-white/10">
+        <div className="h-px w-full overflow-hidden rounded-full bg-foreground/10">
           <div
             className="bg-brand-gradient h-full rounded-full"
             style={{ width: `${progress}%` }}

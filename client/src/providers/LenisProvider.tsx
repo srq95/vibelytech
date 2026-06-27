@@ -1,43 +1,58 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { ReactLenis } from "lenis/react";
-import type { LenisRef } from "lenis/react";
+import { useEffect } from "react";
+import { ReactLenis, useLenis } from "lenis/react";
 import "lenis/dist/lenis.css";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 /**
- * Single global Lenis instance for the whole app.
+ * Wires the live Lenis instance into the GSAP ticker.
  *
- * We disable Lenis's internal rAF (`autoRaf: false`) and instead drive it from
- * the GSAP ticker so smooth scroll and ScrollTrigger stay perfectly in sync.
- * The instance is exposed via `useLenis()` (re-exported below) so other
- * providers/components can stop/start it.
+ * This MUST live inside <ReactLenis> so `useLenis()` resolves to the instance
+ * via context. Crucially it depends on `[lenis]`, so when Lenis finishes
+ * mounting (or is recreated on Fast Refresh / StrictMode remount) the effect
+ * re-runs and (re)drives `lenis.raf`. The previous ref-based, run-once wiring
+ * could read a null instance and never retry — leaving `autoRaf:false` Lenis
+ * with no rAF, so the wheel was intercepted but scroll never advanced (only
+ * dragging the native scrollbar worked).
  */
-export function LenisProvider({ children }: { children: React.ReactNode }) {
-  const lenisRef = useRef<LenisRef>(null);
+function LenisGsapSync() {
+  const lenis = useLenis();
 
   useEffect(() => {
-    const lenis = lenisRef.current?.lenis;
     if (!lenis) return;
+
+    const onScroll = () => ScrollTrigger.update();
+    lenis.on("scroll", onScroll);
 
     const update = (time: number) => {
       // GSAP ticker time is in seconds; Lenis expects milliseconds.
       lenis.raf(time * 1000);
     };
-
     gsap.ticker.add(update);
-    lenis.on("scroll", ScrollTrigger.update);
     gsap.ticker.lagSmoothing(0);
 
     return () => {
+      lenis.off("scroll", onScroll);
       gsap.ticker.remove(update);
-      lenis.off("scroll", ScrollTrigger.update);
     };
-  }, []);
+  }, [lenis]);
 
+  return null;
+}
+
+/**
+ * Single global Lenis instance for the whole app.
+ *
+ * Lenis's internal rAF is disabled (`autoRaf: false`); the GSAP ticker drives
+ * it (see {@link LenisGsapSync}) so smooth scroll and ScrollTrigger stay in
+ * sync. The instance is exposed via `useLenis()` (re-exported below) so other
+ * providers/components can stop/start it.
+ */
+export function LenisProvider({ children }: { children: React.ReactNode }) {
   return (
-    <ReactLenis root options={{ autoRaf: false }} ref={lenisRef}>
+    <ReactLenis root options={{ autoRaf: false }}>
+      <LenisGsapSync />
       {children}
     </ReactLenis>
   );

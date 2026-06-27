@@ -167,7 +167,7 @@ export default function Hero() {
             </div>
 
             {/* Headline — single h1, word-split for stagger */}
-            <h1 className="font-sans text-balance text-5xl font-bold leading-[1.02] tracking-tight sm:text-6xl lg:text-7xl xl:text-8xl">
+            <h1 className="font-sans text-balance text-[2.25rem] font-bold leading-[1.06] tracking-tight sm:text-[2.75rem] lg:text-[3.25rem] xl:text-[4rem]">
               {HEADLINE.map((word, i) => (
                 <span
                   key={i}
