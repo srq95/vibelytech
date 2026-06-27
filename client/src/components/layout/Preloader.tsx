@@ -31,8 +31,13 @@ export default function Preloader() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const uiRef = useRef<HTMLDivElement>(null);
+  // Guard so markReady fires exactly once, even though the progress tween is
+  // re-created when `reducedMotion` resolves (see dependency array below).
+  const readySignalledRef = useRef(false);
 
-  // ── Drive fake progress 0 → 100, then signal ready. Runs once on mount. ──
+  // ── Drive fake progress 0 → 100, then signal ready. Re-runs once if the
+  // reduced-motion preference resolves to true after first render, so those
+  // users get the faster crawl. markReady is guarded to fire only once. ──
   useGSAP(
     () => {
       const proxy = { value: 0 };
@@ -43,7 +48,10 @@ export default function Preloader() {
         onUpdate: () => reportProgress(proxy.value),
         onComplete: () => {
           reportProgress(100);
-          markReady();
+          if (!readySignalledRef.current) {
+            readySignalledRef.current = true;
+            markReady();
+          }
         },
       });
 
@@ -51,7 +59,7 @@ export default function Preloader() {
         tween.kill();
       };
     },
-    { scope: overlayRef },
+    { scope: overlayRef, dependencies: [reducedMotion] },
   );
 
   // ── Exit reveal. Re-runs whenever `phase` changes; acts on "exiting". ──

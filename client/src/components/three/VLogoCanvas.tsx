@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 
 import { cn } from "@/lib/utils";
+import { CanvasErrorBoundary } from "./CanvasErrorBoundary";
 
 interface VLogoCanvasProps {
   variant?: "preloader" | "hero";
@@ -48,7 +49,11 @@ export default function VLogoCanvas({
 }: VLogoCanvasProps) {
   return (
     <div className={cn("relative h-full w-full", className)}>
-      <VLogoScene variant={variant} />
+      {/* If three/WebGL throws, render the same brand-gradient fallback instead
+          of letting the error propagate to the route boundary. */}
+      <CanvasErrorBoundary fallback={<Fallback />}>
+        <VLogoScene variant={variant} />
+      </CanvasErrorBoundary>
     </div>
   );
 }

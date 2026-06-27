@@ -127,7 +127,6 @@ const STAGGER_WINDOW = 0.7;
 
 function VContent({ variant, reducedMotion, isDark, cubeCount }: VContentProps) {
   const groupRef = useRef<THREE.Group>(null);
-  const vRef = useRef<THREE.Mesh>(null);
   const cubesRef = useRef<THREE.InstancedMesh>(null);
 
   const geometry = useMemo(() => buildVGeometry(), []);
@@ -234,7 +233,7 @@ function VContent({ variant, reducedMotion, isDark, cubeCount }: VContentProps) 
 
   return (
     <group ref={groupRef}>
-      <mesh ref={vRef} geometry={geometry} castShadow receiveShadow>
+      <mesh geometry={geometry} castShadow receiveShadow>
         <meshStandardMaterial
           vertexColors
           metalness={0.6}

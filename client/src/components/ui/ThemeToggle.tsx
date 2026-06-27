@@ -59,11 +59,13 @@ function MoonIcon({ className }: { className?: string }) {
 }
 
 export function ThemeToggle({ className }: ThemeToggleProps) {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const mounted = useIsMounted();
 
   function toggle() {
-    setTheme(theme === "dark" ? "light" : "dark");
+    // Set an explicit value based on the *resolved* theme (correct even when
+    // the stored preference is "system").
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
   }
 
   const buttonClass = cn(
@@ -85,7 +87,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
     );
   }
 
-  const isDark = theme === "dark";
+  const isDark = resolvedTheme === "dark";
 
   return (
     <button

@@ -84,7 +84,11 @@ export default function Process() {
     return reducedMotion || activeStep === i;
   }
 
-  const current = processSteps[activeStep];
+  // Under reduced motion the left list shows every step active (no scroll
+  // tracking), so the editor pins to the LAST step instead of being stuck on
+  // step 01 — keeping the two columns coherent.
+  const displayedIndex = reducedMotion ? processSteps.length - 1 : activeStep;
+  const current = processSteps[displayedIndex];
 
   return (
     <section

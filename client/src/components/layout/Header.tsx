@@ -6,6 +6,7 @@ import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Button } from '@/components/ui/Button';
 import { navLinks } from '@/config/site';
 import { cn } from '@/lib/utils';
+import { useLoader } from '@/providers/LoaderProvider';
 
 // ── Animated hamburger icon ──────────────────────────────────────────────────
 
@@ -42,6 +43,9 @@ function HamburgerIcon({ open }: { open: boolean }) {
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Trigger the entrance only once the preloader has fully exited, otherwise
+  // the animation plays unseen behind the z-100 overlay.
+  const { isReady } = useLoader();
 
   // Compact the navbar once user scrolls past 40 px.
   // State is set INSIDE the event handler, not directly in the effect body.
@@ -69,7 +73,9 @@ export default function Header() {
     // clickable through the transparent parts.
     <header
       className="fixed top-0 left-0 right-0 z-50 flex justify-center pointer-events-none px-4 md:px-6 pt-3"
-      style={{ animation: 'header-in 0.6s ease-out 0.5s both' }}
+      style={
+        isReady ? { animation: 'header-in 0.6s ease-out both' } : undefined
+      }
     >
       {/* Constrained container — pointer events restored */}
       <div className="pointer-events-auto relative w-full max-w-5xl">
@@ -149,6 +155,10 @@ export default function Header() {
         <div
           id="mobile-menu"
           aria-hidden={!menuOpen}
+          // When closed, `inert` removes the panel + its links from the tab
+          // order and resolves the aria-hidden-focusable conflict (React 19
+          // supports the boolean `inert` prop).
+          inert={!menuOpen ? true : undefined}
           className={cn(
             'md:hidden glass-strong rounded-2xl mt-2 overflow-hidden',
             'transition-all duration-300 ease-out',
