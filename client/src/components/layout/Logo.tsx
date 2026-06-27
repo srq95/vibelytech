@@ -1,3 +1,6 @@
+"use client";
+
+import { useId } from "react";
 import { cn } from "@/lib/utils";
 
 interface LogoProps {
@@ -13,15 +16,15 @@ interface LogoProps {
  * trailing pixel squares to the upper-left (echoing the brand's pixel-
  * dispersion motif). When `withWord`, follows with "Vibely" + "Tech" wordmark.
  *
- * Each instance uses a unique gradient id suffix to avoid SVG id collisions
- * when rendered multiple times on the same page.
+ * Each instance derives its gradient id from React's `useId()`, which produces
+ * the same value on the server and client — avoiding SVG id collisions when
+ * rendered multiple times AND hydration mismatches.
  */
-let instanceCounter = 0;
-
 export function Logo({ withWord = false, className, wordClassName }: LogoProps) {
-  // Stable per-render id suffix (increments per module instantiation; fine for SSR/CSR)
-  const id = ++instanceCounter;
-  const gradId = `vt-logo-grad-${id}`;
+  // Stable, SSR/CSR-consistent unique id (sanitised — useId() emits ":" chars
+  // that are invalid in SVG ids / url(#…) references).
+  const rawId = useId();
+  const gradId = `vt-logo-grad-${rawId.replace(/:/g, "")}`;
 
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
