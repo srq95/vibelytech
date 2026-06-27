@@ -13,3 +13,4 @@ Task 10: complete — CTA + page/layout assembly, build OK, Logo useId fix, comm
 ALL TASKS COMPLETE — entering final review + visual verification
 Final review: 0 Critical, 3 Important (I1 error boundary, I2 mobile inert, I3 showcase kbd), 8 Minor. Loader handoff verified correct.
 Dispatching consolidated fix subagent from base 7f4faf6.
+Fix wave complete — commits 4eb27d5 + 80b8e53. All 3 Important + M1,M3,M4,M5,M8 fixed. Accepted: M2(label),M6,M7. Build green.
