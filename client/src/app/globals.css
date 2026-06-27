@@ -83,6 +83,7 @@
   --animate-shimmer: shimmer 2.4s linear infinite;
   --animate-spin-slow: spin 14s linear infinite;
   --animate-blink: blink 1.05s step-end infinite;
+  --animate-fade-in: fade-in 0.45s ease-out both;
 }
 
 @keyframes aurora {
@@ -112,6 +113,10 @@
 }
 @keyframes header-in {
   from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
