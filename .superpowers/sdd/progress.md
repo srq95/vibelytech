@@ -18,3 +18,4 @@ FIX ROUND (user feedback): #1✅ #5✅ #6✅ #7✅ (commit d82d51f). #8+#9 V/log
 #10 added: CTA "Let's talk" elegance — will bundle with #4 Footer as one closing-sections task.
 ALL 10 FIXES COMPLETE. Final clean build green. Commits: d82d51f(#1,5,6,7) d93c854(#8,9) be7227d(#2) 0428388(#3) 297eaf2(#4,10).
 Revert: 3D VLogoScene.tsx restored to pre-d93c854 (original symmetric V) per user; SVG Logo + all other fixes kept.
+Marquee upgrade: scroll-reactive GSAP marquee + counter rows + edge masks, commit d806fec. Build green.
