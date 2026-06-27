@@ -222,23 +222,33 @@ interface ProjectPanelProps {
 }
 
 function ProjectPanel({ project, index, total }: ProjectPanelProps) {
+  // Faux address shown in the browser chrome — derived from the client name.
+  const domain = `${project.client.toLowerCase().replace(/\s+/g, "")}.com`;
+
   return (
-    <article
-      className="relative flex h-[72vh] w-[85vw] shrink-0 snap-center flex-col justify-end overflow-hidden rounded-3xl md:h-[80vh] md:w-[80vw] lg:w-[min(48rem,80vw)]"
-    >
-      {/* Vivid gradient visual */}
+    <article className="relative flex h-[78vh] w-[86vw] shrink-0 snap-center flex-col overflow-hidden rounded-3xl border border-border md:h-[82vh] md:w-[82vw] lg:w-[min(54rem,88vw)]">
+      {/* Vivid gradient base */}
+      <div
+        aria-hidden="true"
+        className={cn("absolute inset-0 bg-gradient-to-br", project.gradient)}
+      />
+      {/* Darken so the gradient reads as a deep, premium backdrop */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/45 via-black/55 to-black/70"
+      />
+      {/* Ambient gradient glow blooming behind the device frame */}
       <div
         aria-hidden="true"
         className={cn(
-          "absolute inset-0 bg-gradient-to-br",
+          "pointer-events-none absolute -inset-x-10 top-[-10%] h-[70%] rounded-[50%] bg-gradient-to-br opacity-60 blur-3xl",
           project.gradient,
         )}
       />
-
       {/* Pixel / grid texture */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-[0.18] mix-blend-overlay"
+        className="pointer-events-none absolute inset-0 opacity-[0.12] mix-blend-overlay"
         style={{
           backgroundImage:
             "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)",
@@ -247,84 +257,112 @@ function ProjectPanel({ project, index, total }: ProjectPanelProps) {
       />
       {/* Film grain for richness */}
       <span className="grain" aria-hidden="true" />
-      {/* Bottom darkening for legibility */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent"
-      />
 
       {/* Index counter, top-left */}
-      <div className="absolute left-6 top-6 flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-white/80 md:left-8 md:top-8">
-        <span className="text-white">
-          {String(index).padStart(2, "0")}
-        </span>
+      <div className="absolute left-6 top-6 z-10 flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-[0.2em] text-white/80 md:left-8 md:top-8">
+        <span className="text-white">{String(index).padStart(2, "0")}</span>
         <span className="text-white/50">/ {String(total).padStart(2, "0")}</span>
       </div>
 
-      {/* Glass info layer */}
-      <div className="relative m-4 rounded-2xl p-6 glass md:m-6 md:p-8">
-        {/* Meta row */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-xs font-medium uppercase tracking-wider text-foreground/70">
-          <span className="text-foreground">{project.client}</span>
-          <span aria-hidden="true" className="text-foreground/30">
-            ·
-          </span>
-          <span>{project.category}</span>
-          <span aria-hidden="true" className="text-foreground/30">
-            ·
-          </span>
-          <span>{project.year}</span>
+      {/* Content: device-framed screenshot on top, glass info card below */}
+      <div className="relative flex min-h-0 flex-1 flex-col gap-4 p-4 pt-16 md:gap-6 md:p-6 md:pt-20">
+        {/* Browser frame holding the project mockup */}
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/12 bg-[#0a0f1e] shadow-[0_30px_60px_-25px_rgba(0,0,0,0.8)]">
+          {/* Chrome title bar */}
+          <div className="flex items-center gap-3 border-b border-white/10 bg-white/[0.04] px-4 py-2.5">
+            <span className="flex items-center gap-1.5" aria-hidden="true">
+              <span className="h-2.5 w-2.5 rounded-full bg-white/25" />
+              <span className="h-2.5 w-2.5 rounded-full bg-white/25" />
+              <span className="h-2.5 w-2.5 rounded-full bg-white/25" />
+            </span>
+            <span className="ml-2 hidden min-w-0 flex-1 items-center gap-2 rounded-md bg-white/[0.06] px-3 py-1 font-mono text-[0.7rem] text-white/45 sm:flex">
+              <span
+                aria-hidden="true"
+                className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400/70"
+              />
+              <span className="truncate">{domain}</span>
+            </span>
+          </div>
+          {/* Screenshot — plain <img> keeps SVG serving without optimizer config */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`/showcase/${project.id}.svg`}
+            alt={`${project.title} — ${project.category}`}
+            width={1200}
+            height={900}
+            loading="lazy"
+            decoding="async"
+            className="min-h-0 w-full flex-1 object-cover object-top"
+          />
         </div>
 
-        {/* Title */}
-        <h3 className="mt-3 font-sans text-3xl font-bold leading-tight tracking-tight text-foreground md:text-4xl">
-          {project.title}
-        </h3>
+        {/* Glass info card */}
+        <div className="relative shrink-0 rounded-2xl p-5 glass md:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+            {/* Left: meta + title + description */}
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-xs font-medium uppercase tracking-wider text-foreground/70">
+                <span className="text-foreground">{project.client}</span>
+                <span aria-hidden="true" className="text-foreground/30">
+                  ·
+                </span>
+                <span>{project.category}</span>
+                <span aria-hidden="true" className="text-foreground/30">
+                  ·
+                </span>
+                <span>{project.year}</span>
+              </div>
 
-        {/* Description */}
-        <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted md:text-base">
-          {project.description}
-        </p>
+              <h3 className="mt-2.5 font-sans text-2xl font-bold leading-tight tracking-tight text-foreground md:text-3xl">
+                {project.title}
+              </h3>
 
-        {/* Metrics — prominent */}
-        <dl className="mt-6 flex flex-wrap gap-x-10 gap-y-4">
-          {project.metrics.map((metric) => (
-            <div key={metric.label} className="flex flex-col">
-              <dt className="order-2 mt-1 font-mono text-[0.7rem] font-medium uppercase tracking-wider text-muted">
-                {metric.label}
-              </dt>
-              <dd className="order-1 font-sans text-3xl font-black leading-none tracking-tight md:text-4xl">
-                <span className="text-gradient">{metric.value}</span>
-              </dd>
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted">
+                {project.description}
+              </p>
             </div>
-          ))}
-        </dl>
 
-        {/* Footer: tags + case-study link */}
-        <div className="mt-7 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap gap-2">
-            {project.tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border border-border bg-surface-2 px-3 py-1 text-xs font-medium text-muted"
-              >
-                {tag}
-              </span>
-            ))}
+            {/* Right: metrics — prominent stat blocks */}
+            <dl className="flex shrink-0 gap-x-8 gap-y-4">
+              {project.metrics.map((metric) => (
+                <div key={metric.label} className="flex flex-col">
+                  <dt className="order-2 mt-1 font-mono text-[0.7rem] font-medium uppercase tracking-wider text-muted">
+                    {metric.label}
+                  </dt>
+                  <dd className="order-1 font-sans text-3xl font-black leading-none tracking-tight md:text-4xl">
+                    <span className="text-gradient">{metric.value}</span>
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </div>
 
-          <Link
-            href={`/work/${project.id}`}
-            className="group inline-flex items-center gap-1.5 rounded-full text-sm font-semibold text-brand-blue outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2"
-          >
-            View case study
-            <span
-              aria-hidden="true"
-              className="inline-block transition-transform duration-300 group-hover:translate-x-1"
+          {/* Footer: tags + case-study link */}
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-4">
+            <div className="flex flex-wrap gap-2">
+              {project.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full border border-border bg-surface-2 px-3 py-1 text-xs font-medium text-muted"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+
+            <Link
+              href={`/work/${project.id}`}
+              className="group inline-flex items-center gap-1.5 rounded-full text-sm font-semibold text-brand-blue outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2"
             >
-              →
-            </span>
-          </Link>
+              View case study
+              <span
+                aria-hidden="true"
+                className="inline-block transition-transform duration-300 group-hover:translate-x-1"
+              >
+                →
+              </span>
+            </Link>
+          </div>
         </div>
       </div>
     </article>

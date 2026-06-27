@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" fill="none" role="img">
+  <defs>
+    <linearGradient id="nf-bg" x1="0" y1="0" x2="1200" y2="900" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0a0f1e"/>
+      <stop offset="1" stop-color="#0d1326"/>
+    </linearGradient>
+    <linearGradient id="nf-brand" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2563eb"/>
+      <stop offset="0.55" stop-color="#4f46e5"/>
+      <stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="nf-area" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6366f1" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#6366f1" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="nf-line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#a855f7"/>
+    </linearGradient>
+    <filter id="nf-blur" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="60"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="900" fill="url(#nf-bg)"/>
+  <circle cx="980" cy="160" r="200" fill="#7c3aed" opacity="0.25" filter="url(#nf-blur)"/>
+  <circle cx="180" cy="780" r="180" fill="#2563eb" opacity="0.22" filter="url(#nf-blur)"/>
+
+  <!-- Sidebar -->
+  <rect x="40" y="40" width="180" height="820" rx="24" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.08"/>
+  <rect x="68" y="72" width="36" height="36" rx="10" fill="url(#nf-brand)"/>
+  <rect x="116" y="84" width="62" height="12" rx="6" fill="#ffffff" fill-opacity="0.55"/>
+  <rect x="68" y="160" width="124" height="40" rx="12" fill="url(#nf-brand)" fill-opacity="0.18"/>
+  <rect x="84" y="174" width="92" height="12" rx="6" fill="#c7d2fe"/>
+  <rect x="84" y="230" width="80" height="12" rx="6" fill="#ffffff" fill-opacity="0.28"/>
+  <rect x="84" y="278" width="104" height="12" rx="6" fill="#ffffff" fill-opacity="0.28"/>
+  <rect x="84" y="326" width="70" height="12" rx="6" fill="#ffffff" fill-opacity="0.28"/>
+  <rect x="84" y="374" width="96" height="12" rx="6" fill="#ffffff" fill-opacity="0.28"/>
+
+  <!-- Header -->
+  <rect x="260" y="56" width="150" height="14" rx="7" fill="#ffffff" fill-opacity="0.85"/>
+  <rect x="260" y="82" width="96" height="11" rx="5.5" fill="#ffffff" fill-opacity="0.35"/>
+  <rect x="980" y="56" width="180" height="44" rx="22" fill="#ffffff" fill-opacity="0.06" stroke="#ffffff" stroke-opacity="0.1"/>
+  <circle cx="1138" cy="78" r="14" fill="url(#nf-brand)"/>
+  <rect x="1006" y="72" width="96" height="12" rx="6" fill="#ffffff" fill-opacity="0.4"/>
+
+  <!-- Balance hero card -->
+  <rect x="260" y="132" width="560" height="200" rx="24" fill="url(#nf-brand)"/>
+  <rect x="260" y="132" width="560" height="200" rx="24" fill="#000000" fill-opacity="0.06"/>
+  <rect x="292" y="164" width="120" height="12" rx="6" fill="#ffffff" fill-opacity="0.7"/>
+  <text x="292" y="248" font-family="Arial, sans-serif" font-size="62" font-weight="800" fill="#ffffff">$248,920.00</text>
+  <rect x="292" y="278" width="150" height="12" rx="6" fill="#ffffff" fill-opacity="0.55"/>
+  <rect x="640" y="164" width="148" height="56" rx="14" fill="#ffffff" fill-opacity="0.16"/>
+  <rect x="664" y="184" width="100" height="16" rx="8" fill="#ffffff" fill-opacity="0.85"/>
+  <circle cx="772" cy="300" r="6" fill="#ffffff" fill-opacity="0.5"/>
+
+  <!-- Performance / chart card -->
+  <rect x="260" y="356" width="560" height="288" rx="24" fill="#ffffff" fill-opacity="0.045" stroke="#ffffff" stroke-opacity="0.08"/>
+  <rect x="292" y="388" width="120" height="12" rx="6" fill="#ffffff" fill-opacity="0.7"/>
+  <rect x="708" y="384" width="80" height="22" rx="11" fill="#22c55e" fill-opacity="0.18"/>
+  <text x="724" y="400" font-family="Arial, sans-serif" font-size="13" font-weight="700" fill="#4ade80">+18.4%</text>
+  <path d="M292 588 L348 548 L404 568 L460 512 L516 532 L572 472 L628 496 L684 444 L740 460 L788 420 L788 612 L292 612 Z" fill="url(#nf-area)"/>
+  <path d="M292 588 L348 548 L404 568 L460 512 L516 532 L572 472 L628 496 L684 444 L740 460 L788 420" stroke="url(#nf-line)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="788" cy="420" r="7" fill="#a855f7" stroke="#0b1020" stroke-width="3"/>
+
+  <!-- Transactions panel -->
+  <rect x="840" y="132" width="320" height="512" rx="24" fill="#ffffff" fill-opacity="0.045" stroke="#ffffff" stroke-opacity="0.08"/>
+  <rect x="872" y="164" width="140" height="13" rx="6.5" fill="#ffffff" fill-opacity="0.7"/>
+  <g>
+    <rect x="872" y="212" width="256" height="68" rx="14" fill="#ffffff" fill-opacity="0.04"/>
+    <circle cx="906" cy="246" r="18" fill="url(#nf-brand)" fill-opacity="0.4"/>
+    <rect x="940" y="232" width="120" height="11" rx="5.5" fill="#ffffff" fill-opacity="0.6"/>
+    <rect x="940" y="252" width="72" height="9" rx="4.5" fill="#ffffff" fill-opacity="0.3"/>
+    <rect x="1064" y="238" width="48" height="13" rx="6.5" fill="#4ade80" fill-opacity="0.8"/>
+  </g>
+  <g>
+    <rect x="872" y="292" width="256" height="68" rx="14" fill="#ffffff" fill-opacity="0.04"/>
+    <circle cx="906" cy="326" r="18" fill="#a855f7" fill-opacity="0.4"/>
+    <rect x="940" y="312" width="100" height="11" rx="5.5" fill="#ffffff" fill-opacity="0.6"/>
+    <rect x="940" y="332" width="64" height="9" rx="4.5" fill="#ffffff" fill-opacity="0.3"/>
+    <rect x="1070" y="318" width="42" height="13" rx="6.5" fill="#ffffff" fill-opacity="0.5"/>
+  </g>
+  <g>
+    <rect x="872" y="372" width="256" height="68" rx="14" fill="#ffffff" fill-opacity="0.04"/>
+    <circle cx="906" cy="406" r="18" fill="#3b82f6" fill-opacity="0.4"/>
+    <rect x="940" y="392" width="128" height="11" rx="5.5" fill="#ffffff" fill-opacity="0.6"/>
+    <rect x="940" y="412" width="80" height="9" rx="4.5" fill="#ffffff" fill-opacity="0.3"/>
+    <rect x="1066" y="398" width="46" height="13" rx="6.5" fill="#4ade80" fill-opacity="0.8"/>
+  </g>
+  <g>
+    <rect x="872" y="452" width="256" height="68" rx="14" fill="#ffffff" fill-opacity="0.04"/>
+    <circle cx="906" cy="486" r="18" fill="url(#nf-brand)" fill-opacity="0.4"/>
+    <rect x="940" y="472" width="112" height="11" rx="5.5" fill="#ffffff" fill-opacity="0.6"/>
+    <rect x="940" y="492" width="68" height="9" rx="4.5" fill="#ffffff" fill-opacity="0.3"/>
+    <rect x="1068" y="478" width="44" height="13" rx="6.5" fill="#ffffff" fill-opacity="0.5"/>
+  </g>
+  <rect x="872" y="556" width="256" height="48" rx="14" fill="url(#nf-brand)" fill-opacity="0.22" stroke="#818cf8" stroke-opacity="0.4"/>
+  <rect x="956" y="574" width="88" height="12" rx="6" fill="#c7d2fe"/>
+
+  <!-- Bottom KPI row -->
+  <rect x="260" y="668" width="270" height="156" rx="22" fill="#ffffff" fill-opacity="0.045" stroke="#ffffff" stroke-opacity="0.08"/>
+  <rect x="288" y="700" width="86" height="11" rx="5.5" fill="#ffffff" fill-opacity="0.35"/>
+  <text x="288" y="760" font-family="Arial, sans-serif" font-size="40" font-weight="800" fill="#ffffff">$12,480</text>
+  <rect x="288" y="784" width="120" height="9" rx="4.5" fill="#4ade80" fill-opacity="0.7"/>
+
+  <rect x="550" y="668" width="270" height="156" rx="22" fill="#ffffff" fill-opacity="0.045" stroke="#ffffff" stroke-opacity="0.08"/>
+  <rect x="578" y="700" width="86" height="11" rx="5.5" fill="#ffffff" fill-opacity="0.35"/>
+  <text x="578" y="760" font-family="Arial, sans-serif" font-size="40" font-weight="800" fill="#ffffff">0.6s</text>
+  <rect x="578" y="784" width="100" height="9" rx="4.5" fill="#818cf8" fill-opacity="0.7"/>
+</svg>
