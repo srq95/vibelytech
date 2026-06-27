@@ -45,6 +45,13 @@ function isInternalHref(href: string): boolean {
   return href.startsWith("/") || href.startsWith("#");
 }
 
+// Only true http(s) links should open in a new tab with noopener/noreferrer.
+// Protocol links (`mailto:`, `tel:`, `sms:`) navigate in-place and are handled
+// by the plain-anchor branch WITHOUT target/rel.
+function isExternalHref(href: string): boolean {
+  return /^https?:\/\//i.test(href);
+}
+
 export function Button({
   variant = "primary",
   size = "md",
@@ -73,13 +80,14 @@ export function Button({
         </Link>
       );
     }
-    // Plain anchor for external links
+    // Plain anchor. Real external http(s) links open in a new tab;
+    // protocol links (mailto:/tel:/sms:) navigate in-place — no target/rel.
+    const external = isExternalHref(href);
     return (
       <a
         href={href}
         className={classes}
-        target="_blank"
-        rel="noopener noreferrer"
+        {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
         {...(rest as AnchorHTMLAttributes<HTMLAnchorElement>)}
       >
         {children}

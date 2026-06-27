@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
+import { useLenis } from "lenis/react";
 import { projects, type Project } from "@/content/showcase";
 import { gsap, useGSAP } from "@/lib/gsap";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,15 @@ export default function Showcase() {
   const pinRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
+
+  // Global Lenis instance (smooth scroll). Kept in a ref so the GSAP setup —
+  // which runs once on mount — always reads the latest value without needing
+  // to re-run when Lenis finishes mounting.
+  const lenis = useLenis();
+  const lenisRef = useRef(lenis);
+  useEffect(() => {
+    lenisRef.current = lenis;
+  }, [lenis]);
 
   useGSAP(
     () => {
@@ -62,7 +72,43 @@ export default function Showcase() {
             },
           });
 
+          // Keyboard a11y: while the gallery is pinned, the track is moved with
+          // a `transform`, so off-screen panels (and their "View case study"
+          // links / trailing CTA) can be focused but never scrolled into view
+          // by the browser. When a focusable element inside a panel receives
+          // focus, translate that panel into view by jumping page scroll to the
+          // position the ScrollTrigger maps to.
+          //
+          // Because the pin range length equals the track's translate distance
+          // (end - start === distance) and the x tween is linear, the track's
+          // translation at any scroll position is exactly (scrollY - start).
+          // So bringing a panel whose layout offset is `offsetLeft` to the
+          // left edge of the viewport means scrolling to `start + offsetLeft`
+          // (clamped to the pinned range). start/end are read on demand, so
+          // they stay correct across ScrollTrigger refreshes.
+          const handleFocusIn = (event: FocusEvent) => {
+            const st = tween.scrollTrigger;
+            if (!st) return;
+            const focused = event.target as HTMLElement | null;
+            const panel = focused?.closest<HTMLElement>("article");
+            if (!panel || panel.parentElement !== track) return;
+
+            const dest = Math.min(
+              st.end,
+              Math.max(st.start, st.start + panel.offsetLeft),
+            );
+            const activeLenis = lenisRef.current;
+            if (activeLenis) {
+              activeLenis.scrollTo(dest, { immediate: true, force: true });
+            } else {
+              window.scrollTo({ top: dest, behavior: "auto" });
+            }
+          };
+
+          pin.addEventListener("focusin", handleFocusIn);
+
           return () => {
+            pin.removeEventListener("focusin", handleFocusIn);
             tween.scrollTrigger?.kill();
             tween.kill();
             gsap.set(track, { clearProps: "transform" });
