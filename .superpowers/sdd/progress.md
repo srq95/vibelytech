@@ -16,3 +16,5 @@ Dispatching consolidated fix subagent from base 7f4faf6.
 Fix wave complete — commits 4eb27d5 + 80b8e53. All 3 Important + M1,M3,M4,M5,M8 fixed. Accepted: M2(label),M6,M7. Build green.
 FIX ROUND (user feedback): #1✅ #5✅ #6✅ #7✅ (commit d82d51f). #8+#9 V/logo in progress. Pending: #2 Process pin, #3 Showcase images, #4 Footer.
 #10 added: CTA "Let's talk" elegance — will bundle with #4 Footer as one closing-sections task.
+ALL 10 FIXES COMPLETE. Final clean build green. Commits: d82d51f(#1,5,6,7) d93c854(#8,9) be7227d(#2) 0428388(#3) 297eaf2(#4,10).
+Revert: 3D VLogoScene.tsx restored to pre-d93c854 (original symmetric V) per user; SVG Logo + all other fixes kept.

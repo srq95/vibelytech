@@ -20,105 +20,53 @@ interface VLogoSceneProps {
 /* Geometry                                                                   */
 /* -------------------------------------------------------------------------- */
 
-const COLOR_BLUE = new THREE.Color("#2563eb"); // brand blue (blade / lower-left)
-const COLOR_VIOLET = new THREE.Color("#a855f7"); // brand violet (ribbon / upper-right)
+const COLOR_BOTTOM = new THREE.Color("#2563eb"); // brand blue (V's point)
+const COLOR_TOP = new THREE.Color("#a855f7"); // brand violet (V's arms)
 
-// The brand gradient runs diagonally: blue at bottom-left, violet at top-right.
-const GRAD_DIR = new THREE.Vector2(0.5, 0.86).normalize();
-
-// Combined xy centre of both arm shapes (so the pair sits centred at origin).
-const V_CENTER_X = 0.06;
-const V_CENTER_Y = 0.06;
-
-// Base scale applied to the whole composition so the (taller, wider-on-the-
-// right) V plus its full pixel-cube trail always stay inside the canvas with
-// padding — see the framing notes in the canvas owner below.
-const BASE_SCALE = 0.56;
-
-/**
- * Paint a blue→violet gradient across a *set* of geometries using a shared
- * diagonal axis + shared min/max, so blue stays bottom-left and violet
- * top-right across BOTH arms (not normalised per-mesh).
- */
-function applyDiagonalGradient(geos: THREE.BufferGeometry[]): void {
-  let minP = Infinity;
-  let maxP = -Infinity;
-  for (const g of geos) {
-    const pos = g.attributes.position;
-    for (let i = 0; i < pos.count; i += 1) {
-      const p = pos.getX(i) * GRAD_DIR.x + pos.getY(i) * GRAD_DIR.y;
-      if (p < minP) minP = p;
-      if (p > maxP) maxP = p;
-    }
-  }
-  const span = maxP - minP || 1;
+/** Map a blue→violet gradient onto vertices along the Y axis. */
+function applyGradientColors(geo: THREE.BufferGeometry): void {
+  geo.computeBoundingBox();
+  const bb = geo.boundingBox;
+  if (!bb) return;
+  const minY = bb.min.y;
+  const spanY = bb.max.y - bb.min.y || 1;
+  const pos = geo.attributes.position;
+  const colors = new Float32Array(pos.count * 3);
   const tmp = new THREE.Color();
-  for (const g of geos) {
-    const pos = g.attributes.position;
-    const colors = new Float32Array(pos.count * 3);
-    for (let i = 0; i < pos.count; i += 1) {
-      const p = pos.getX(i) * GRAD_DIR.x + pos.getY(i) * GRAD_DIR.y;
-      const t = (p - minP) / span;
-      tmp.copy(COLOR_BLUE).lerp(COLOR_VIOLET, t);
-      colors[i * 3] = tmp.r;
-      colors[i * 3 + 1] = tmp.g;
-      colors[i * 3 + 2] = tmp.b;
-    }
-    g.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  for (let i = 0; i < pos.count; i += 1) {
+    const t = (pos.getY(i) - minY) / spanY;
+    tmp.copy(COLOR_BOTTOM).lerp(COLOR_TOP, t);
+    colors[i * 3] = tmp.r;
+    colors[i * 3 + 1] = tmp.g;
+    colors[i * 3 + 2] = tmp.b;
   }
+  geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
 }
 
-interface VGeometries {
-  left: THREE.BufferGeometry; // thin, shorter blue blade
-  right: THREE.BufferGeometry; // tall, thick violet ribbon
-}
+/** Procedural extruded, bevelled "V" built from a thick-chevron 2D path. */
+function buildVGeometry(): THREE.BufferGeometry {
+  const shape = new THREE.Shape();
+  // Outer V: top-left → bottom point → top-right
+  shape.moveTo(-1.0, 1.1);
+  shape.lineTo(0, -1.1);
+  shape.lineTo(1.0, 1.1);
+  // Inner notch (back up the inside of the chevron)
+  shape.lineTo(0.5, 1.1);
+  shape.lineTo(0, -0.25);
+  shape.lineTo(-0.5, 1.1);
+  shape.closePath();
 
-/**
- * Procedural asymmetric "V": a thin/short LEFT blade and a tall/thick RIGHT
- * folded ribbon, meeting at a bottom vertex — matching the brand mark. Built as
- * two extruded, bevelled shapes; the right ribbon is extruded deeper so its
- * front/side faces catch light differently (the folded-crease read).
- */
-function buildVGeometries(): VGeometries {
-  // Left blade — thin parallelogram rising up-left, top ~y0.5 (shorter).
-  const leftShape = new THREE.Shape();
-  leftShape.moveTo(-1.0, 0.5);
-  leftShape.lineTo(-0.62, 0.56);
-  leftShape.lineTo(0.04, -0.92);
-  leftShape.lineTo(-0.2, -1.04);
-  leftShape.closePath();
-
-  // Right ribbon — wider, rising to ~y1.16 (taller) on the right.
-  const rightShape = new THREE.Shape();
-  rightShape.moveTo(0.16, -0.92);
-  rightShape.lineTo(0.5, 1.16);
-  rightShape.lineTo(1.12, 0.98);
-  rightShape.lineTo(-0.06, -1.04);
-  rightShape.closePath();
-
-  const left = new THREE.ExtrudeGeometry(leftShape, {
-    depth: 0.26,
-    bevelEnabled: true,
-    bevelThickness: 0.06,
-    bevelSize: 0.05,
-    bevelSegments: 3,
-    curveSegments: 6,
-  });
-  const right = new THREE.ExtrudeGeometry(rightShape, {
-    depth: 0.5,
+  const geo = new THREE.ExtrudeGeometry(shape, {
+    depth: 0.45,
     bevelEnabled: true,
     bevelThickness: 0.09,
     bevelSize: 0.07,
     bevelSegments: 4,
-    curveSegments: 6,
+    curveSegments: 8,
   });
-
-  // Shared xy centre; centre each arm on its own depth in z.
-  left.translate(-V_CENTER_X, -V_CENTER_Y, -0.13);
-  right.translate(-V_CENTER_X, -V_CENTER_Y, -0.25);
-
-  applyDiagonalGradient([left, right]);
-  return { left, right };
+  geo.center();
+  applyGradientColors(geo);
+  return geo;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -138,25 +86,23 @@ function buildCubes(count: number): CubeData {
   const seeds = new Float32Array(count);
   const sizes = new Float32Array(count);
   for (let i = 0; i < count; i += 1) {
-    // Resting cluster: a tight trail off the UPPER-LEFT tip of the blue blade
-    // (the blade's tip sits near x≈-1.05, y≈0.45 after centring), fanning up-left.
-    const tx = -0.9 - Math.random() * 0.55; // -0.90 … -1.45
-    const ty = 0.35 + Math.random() * 0.75; // 0.35 … 1.10
-    const tz = (Math.random() - 0.5) * 0.5;
+    // Cluster toward the upper-left of the V (the logo's pixel trail).
+    const tx = -1.5 + Math.random() * 1.7; // mostly negative x
+    const ty = 0.2 + Math.random() * 1.5; // upper half
+    const tz = (Math.random() - 0.5) * 0.7;
     targets[i * 3] = tx;
     targets[i * 3 + 1] = ty;
     targets[i * 3 + 2] = tz;
 
-    // Assembly origin: BOUNDED offset toward the up-left so cubes fly in from
-    // the dispersion direction and never leave the frame mid-flight.
-    const angle = Math.PI * 0.75 + (Math.random() - 0.5) * Math.PI * 0.6;
-    const radius = 0.55 + Math.random() * 0.6; // 0.55 … 1.15
+    // Scattered start: pushed outward from the target.
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 2.5 + Math.random() * 4;
     starts[i * 3] = tx + Math.cos(angle) * radius;
-    starts[i * 3 + 1] = ty + Math.sin(angle) * radius;
-    starts[i * 3 + 2] = tz + (Math.random() - 0.5) * 0.8;
+    starts[i * 3 + 1] = ty + Math.sin(angle) * radius * 0.7 + 1.5;
+    starts[i * 3 + 2] = tz + (Math.random() - 0.5) * 4;
 
     seeds[i] = Math.random();
-    sizes[i] = 0.045 + Math.random() * 0.06;
+    sizes[i] = 0.05 + Math.random() * 0.08;
   }
   return { targets, starts, seeds, sizes };
 }
@@ -183,7 +129,7 @@ function VContent({ variant, reducedMotion, isDark, cubeCount }: VContentProps) 
   const groupRef = useRef<THREE.Group>(null);
   const cubesRef = useRef<THREE.InstancedMesh>(null);
 
-  const geometry = useMemo(() => buildVGeometries(), []);
+  const geometry = useMemo(() => buildVGeometry(), []);
   const cubes = useMemo(() => buildCubes(cubeCount), [cubeCount]);
   const dummy = useMemo(() => new THREE.Object3D(), []);
   const tmpColor = useMemo(() => new THREE.Color(), []);
@@ -191,13 +137,7 @@ function VContent({ variant, reducedMotion, isDark, cubeCount }: VContentProps) 
   const emissiveIntensity = isDark ? 0.55 : 0.28;
 
   // Dispose procedural geometry on unmount.
-  useEffect(() => {
-    const { left, right } = geometry;
-    return () => {
-      left.dispose();
-      right.dispose();
-    };
-  }, [geometry]);
+  useEffect(() => () => geometry.dispose(), [geometry]);
 
   // Initialise instance matrices + per-cube colours.
   useLayoutEffect(() => {
@@ -212,9 +152,7 @@ function VContent({ variant, reducedMotion, isDark, cubeCount }: VContentProps) 
       dummy.rotation.set(cubes.seeds[i] * 6, cubes.seeds[i] * 4, 0);
       dummy.updateMatrix();
       mesh.setMatrixAt(i, dummy.matrix);
-      // Pixel trail reads as the blue end of the brand gradient (only a hint of
-      // violet) — it lives at the blue/lower-left tip in the real mark.
-      tmpColor.copy(COLOR_BLUE).lerp(COLOR_VIOLET, cubes.seeds[i] * 0.35);
+      tmpColor.copy(COLOR_BOTTOM).lerp(COLOR_TOP, cubes.seeds[i]);
       mesh.setColorAt(i, tmpColor);
     }
     mesh.instanceMatrix.needsUpdate = true;
@@ -264,14 +202,12 @@ function VContent({ variant, reducedMotion, isDark, cubeCount }: VContentProps) 
       }
     } else {
       // Hero: calm float + subtle pointer parallax, cubes drift in place.
-      // Amplitudes kept small + bounded so the tall right arm and cube trail
-      // never rotate/drift out of the (already padded) frame.
       if (group) {
-        const targetRotY = state.pointer.x * 0.26;
-        const targetRotX = -state.pointer.y * 0.18;
+        const targetRotY = state.pointer.x * 0.35;
+        const targetRotX = -state.pointer.y * 0.25;
         group.rotation.y += (targetRotY - group.rotation.y) * Math.min(delta * 2.5, 1);
         group.rotation.x += (targetRotX - group.rotation.x) * Math.min(delta * 2.5, 1);
-        group.position.y = Math.sin(t * 0.8) * 0.07;
+        group.position.y = Math.sin(t * 0.8) * 0.08;
         group.scale.setScalar(1);
       }
       if (mesh) {
@@ -296,46 +232,32 @@ function VContent({ variant, reducedMotion, isDark, cubeCount }: VContentProps) 
   });
 
   return (
-    // Outer group holds the fixed framing scale; inner group is animated
-    // (assemble / float / parallax) so amplitudes compose cleanly on top.
-    <group scale={BASE_SCALE}>
-      <group ref={groupRef}>
-        <mesh geometry={geometry.left} castShadow receiveShadow>
-          <meshStandardMaterial
-            vertexColors
-            metalness={0.55}
-            roughness={0.28}
-            emissive={"#1d4ed8"}
-            emissiveIntensity={emissiveIntensity}
-            envMapIntensity={0.8}
-          />
-        </mesh>
-        <mesh geometry={geometry.right} castShadow receiveShadow>
-          <meshStandardMaterial
-            vertexColors
-            metalness={0.6}
-            roughness={0.25}
-            emissive={"#5b21b6"}
-            emissiveIntensity={emissiveIntensity}
-            envMapIntensity={0.85}
-          />
-        </mesh>
+    <group ref={groupRef}>
+      <mesh geometry={geometry} castShadow receiveShadow>
+        <meshStandardMaterial
+          vertexColors
+          metalness={0.6}
+          roughness={0.25}
+          emissive={"#5b21b6"}
+          emissiveIntensity={emissiveIntensity}
+          envMapIntensity={0.8}
+        />
+      </mesh>
 
-        <instancedMesh
-          ref={cubesRef}
-          args={[undefined, undefined, cubeCount]}
-          frustumCulled={false}
-        >
-          <boxGeometry args={[1, 1, 1]} />
-          <meshStandardMaterial
-            metalness={0.5}
-            roughness={0.3}
-            emissive={"#3b82f6"}
-            emissiveIntensity={emissiveIntensity * 0.7}
-            toneMapped={false}
-          />
-        </instancedMesh>
-      </group>
+      <instancedMesh
+        ref={cubesRef}
+        args={[undefined, undefined, cubeCount]}
+        frustumCulled={false}
+      >
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial
+          metalness={0.5}
+          roughness={0.3}
+          emissive={"#3b82f6"}
+          emissiveIntensity={emissiveIntensity * 0.7}
+          toneMapped={false}
+        />
+      </instancedMesh>
     </group>
   );
 }
@@ -369,10 +291,7 @@ export default function VLogoScene({
       style={{ width: "100%", height: "100%" }}
       dpr={[1, dprMax]}
       gl={{ alpha: true, antialias: true }}
-      // Pulled back + narrower FOV (with BASE_SCALE on the group) so the full
-      // asymmetric V and the entire pixel-cube trail keep a comfortable margin
-      // inside the square canvas at every frame of both variants.
-      camera={{ position: [0, 0, 5.6], fov: 34 }}
+      camera={{ position: [0, 0, 5], fov: 35 }}
       frameloop={reducedMotion ? "demand" : "always"}
     >
       <ambientLight intensity={0.55 * lightBoost} />
