@@ -6,6 +6,9 @@ import { site, socialLinks, footerColumns } from '@/config/site';
 // Computed once at build/request time on the server — no hydration drift.
 const YEAR = new Date().getFullYear();
 
+// tel: links want a clean, dial-able value (digits + leading +).
+const TEL_HREF = `tel:${site.phone.replace(/[^+\d]/g, '')}`;
+
 // ── Social icons (inline SVG, aria-hidden) ───────────────────────────────────
 
 function XTwitterIcon() {
@@ -81,43 +84,43 @@ function SocialIcon({ label }: { label: string }) {
 
 export default function Footer() {
   return (
-    <footer className="relative bg-background">
-      {/* Gradient top-border line */}
+    <footer className="relative isolate overflow-hidden bg-background">
+      {/* Gradient top-border hairline */}
       <div
-        className="absolute top-0 left-0 right-0 h-px bg-brand-gradient"
+        className="absolute inset-x-0 top-0 h-px bg-brand-gradient"
         aria-hidden="true"
+      />
+      {/* Soft brand glow rising from the top edge — ties into the CTA above */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -top-24 left-1/2 -z-10 h-72 w-[80%] max-w-4xl -translate-x-1/2 rounded-full bg-brand-gradient opacity-[0.08] blur-[100px] dark:opacity-[0.12]"
       />
 
       {/* Large brand watermark — decorative, hidden from a11y tree */}
       <div
-        className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none select-none"
+        className="pointer-events-none absolute -bottom-[14vw] left-1/2 -z-10 -translate-x-1/2 select-none overflow-hidden"
         aria-hidden="true"
       >
-        <span className="text-[22vw] font-bold leading-none tracking-tighter text-gradient opacity-[0.04]">
+        <span className="text-[34vw] font-black leading-none tracking-tighter text-gradient opacity-[0.05]">
           V
         </span>
       </div>
 
-      <Container className="relative pt-16 pb-10 md:pt-20 md:pb-12">
+      <Container className="relative pt-20 pb-10 md:pt-24 md:pb-12">
 
         {/* ── Main grid ──────────────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 md:gap-12 mb-12 md:mb-14">
+        <div className="mb-14 grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1.1fr] lg:gap-10">
 
           {/* Brand block */}
-          <div className="lg:col-span-2">
-            <Logo withWord className="mb-5" />
-            <p className="text-sm text-muted leading-relaxed mb-5 max-w-xs">
-              {site.tagline}
+          <div className="max-w-sm">
+            <Logo withWord className="mb-5" wordClassName="text-lg" />
+            <p className="mb-6 max-w-xs text-sm leading-relaxed text-muted">
+              {site.tagline} We partner with ambitious teams to design and
+              engineer products people love.
             </p>
-            <a
-              href={`mailto:${site.email}`}
-              className="text-sm text-brand-blue hover:text-brand-violet transition-colors duration-200 focus-visible:outline-none focus-visible:underline"
-            >
-              {site.email}
-            </a>
 
-            {/* Social links */}
-            <div className="flex items-center gap-2.5 mt-6">
+            {/* Social links — refined glass pills */}
+            <div className="flex items-center gap-2.5">
               {socialLinks.map(({ label, href }) => (
                 <a
                   key={href}
@@ -125,7 +128,7 @@ export default function Footer() {
                   aria-label={label}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="glass inline-flex h-9 w-9 items-center justify-center rounded-full text-muted hover:text-foreground hover:scale-105 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue"
+                  className="glass inline-flex h-10 w-10 items-center justify-center rounded-full text-muted transition-all duration-200 hover:-translate-y-0.5 hover:text-foreground hover:shadow-[0_8px_24px_-8px_var(--glow)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue"
                 >
                   <SocialIcon label={label} />
                 </a>
@@ -136,16 +139,20 @@ export default function Footer() {
           {/* Link column groups */}
           {footerColumns.map(({ title, links }) => (
             <div key={title}>
-              <h3 className="text-xs font-semibold uppercase tracking-widest text-brand-blue mb-4">
+              <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-brand-blue">
                 {title}
               </h3>
-              <ul className="space-y-2.5">
+              <ul className="space-y-3">
                 {links.map(({ label, href }) => (
                   <li key={href}>
                     <a
                       href={href}
-                      className="text-sm text-muted hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:underline"
+                      className="group inline-flex items-center gap-1.5 text-sm text-muted transition-colors duration-200 hover:text-foreground focus-visible:outline-none focus-visible:underline"
                     >
+                      <span
+                        aria-hidden="true"
+                        className="h-px w-0 rounded-full bg-brand-gradient transition-all duration-300 ease-out group-hover:w-4"
+                      />
                       {label}
                     </a>
                   </li>
@@ -153,26 +160,72 @@ export default function Footer() {
               </ul>
             </div>
           ))}
+
+          {/* Get in touch */}
+          <div>
+            <h3 className="mb-4 text-xs font-semibold uppercase tracking-widest text-brand-blue">
+              Get in touch
+            </h3>
+            <ul className="space-y-3 text-sm">
+              <li>
+                <a
+                  href={`mailto:${site.email}`}
+                  className="text-muted transition-colors duration-200 hover:text-foreground focus-visible:outline-none focus-visible:underline"
+                >
+                  {site.email}
+                </a>
+              </li>
+              <li>
+                <a
+                  href={TEL_HREF}
+                  className="text-muted transition-colors duration-200 hover:text-foreground focus-visible:outline-none focus-visible:underline"
+                >
+                  {site.phone}
+                </a>
+              </li>
+              <li className="max-w-[15rem] leading-relaxed text-muted">
+                {site.address}
+              </li>
+            </ul>
+          </div>
         </div>
 
         {/* ── Bottom bar ─────────────────────────────────────────────────── */}
-        <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-muted order-2 sm:order-1">
-            &copy; {YEAR} VibelyTech. All rights reserved.
+        <div className="flex flex-col items-center justify-between gap-4 border-t border-border pt-6 sm:flex-row">
+          <p className="order-2 text-xs text-muted sm:order-1">
+            &copy; {YEAR} {site.name}. All rights reserved.
           </p>
 
-          <div className="flex items-center gap-4 order-1 sm:order-2">
+          <div className="order-1 flex items-center gap-5 sm:order-2">
             <a
               href="/privacy"
-              className="text-xs text-muted hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:underline"
+              className="text-xs text-muted transition-colors duration-200 hover:text-foreground focus-visible:outline-none focus-visible:underline"
             >
               Privacy Policy
             </a>
             <a
               href="/terms"
-              className="text-xs text-muted hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:underline"
+              className="text-xs text-muted transition-colors duration-200 hover:text-foreground focus-visible:outline-none focus-visible:underline"
             >
               Terms of Service
+            </a>
+            <a
+              href="#top"
+              aria-label="Back to top"
+              className="glass inline-flex h-8 w-8 items-center justify-center rounded-full text-muted transition-all duration-200 hover:-translate-y-0.5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                aria-hidden="true"
+                className="h-3.5 w-3.5"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M18 15l-6-6-6 6" />
+              </svg>
             </a>
             <ThemeToggle />
           </div>
