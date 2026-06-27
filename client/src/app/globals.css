@@ -183,9 +183,7 @@ html[data-loading="true"] body {
   background-image: linear-gradient(115deg, var(--brand-start), var(--brand-end));
 }
 
-/* Liquid glass surface — frosted blur + saturation + layered highlights.
-   `isolation: isolate` keeps each glass surface its own backdrop root so the
-   blur renders reliably even inside transformed/animated ancestors. */
+/* Liquid glass surface — frosted blur + saturation + layered highlights. */
 @utility glass {
   background: var(--glass-bg);
   backdrop-filter: blur(22px) saturate(185%) brightness(1.06);
