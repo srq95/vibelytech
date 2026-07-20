@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="30 -3 314 314">
+  <defs>
+    <linearGradient id="vt-fav-1" x1="154.01" y1="185.91" x2="200.17" y2="114.71" gradientUnits="userSpaceOnUse">
+      <stop offset=".13" stop-color="#1e7bfe"/>
+      <stop offset="1" stop-color="#8133f2"/>
+    </linearGradient>
+    <linearGradient id="vt-fav-2" x1="100.83" y1="81.73" x2="213.18" y2="255.41" gradientUnits="userSpaceOnUse">
+      <stop offset=".53" stop-color="#1e7bfe" stop-opacity="0"/>
+      <stop offset="1" stop-color="#4a2fde"/>
+    </linearGradient>
+    <linearGradient id="vt-fav-3" x1="77.53" y1="1761.36" x2="87.72" y2="1761.36" gradientTransform="translate(0 1888.31) scale(1 -1)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6c2df7"/>
+      <stop offset="1" stop-color="#8133f2"/>
+    </linearGradient>
+  </defs>
+  <rect x="54.77" y="34.1" width="12.6" height="13.2" fill="#1b7dff"/>
+  <polygon points="336.47 62.1 238.47 227.8 235.87 227.8 232.57 222 201.87 168.2 215.57 144.4 256.87 73.1 336.47 62.1" fill="#7734e4"/>
+  <polygon points="234.17 223.1 232.57 222 201.87 168.2 215.57 144.4 216.37 144.9 234.17 223.1" fill="#5824c7"/>
+  <path d="m222.47,221.5l-88.4-149.3h-16.8v7.7h-8.4l-1,10.8h21.2v22.1h-21.2v-22.1l-6.2,22.1v15.1h14.6v13.9h-14.6l69.2,114.9,41.9,14.2,25.7-43.1-16-6.3Zm-89.6-133.2h-9.3v-9.7h9.3v9.7Z" fill="url(#vt-fav-1)"/>
+  <polygon points="222.47 221.5 184.65 157.63 111.2 157.63 170.87 256.7 212.77 270.9 238.47 227.8 222.47 221.5" fill="url(#vt-fav-2)"/>
+  <rect x="38.97" y="69.2" width="10.2" height="10.7" fill="#75b0e8"/>
+  <rect x="77.57" y="121.6" width="10.2" height="10.7" fill="url(#vt-fav-3)"/>
+  <rect x="57.77" y="80.3" width="19.8" height="20.7" fill="#1b7dff"/>
+  <rect x="87.77" y="90.7" width="21.2" height="22.2" fill="#1b7dff"/>
+  <polygon points="108.87 65.3 108.87 72.2 86.77 72.2 86.77 57.2 101.77 57.2 101.77 65.3 108.87 65.3" fill="#1b7dff"/>
+</svg>

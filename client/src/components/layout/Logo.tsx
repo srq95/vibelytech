@@ -12,11 +12,12 @@ interface LogoProps {
 /**
  * VibelyTech Logo
  *
- * Inline SVG "V" mark with a blue→violet linearGradient and a few small
- * trailing pixel squares to the upper-left (echoing the brand's pixel-
- * dispersion motif). When `withWord`, follows with "Vibely" + "Tech" wordmark.
+ * Inline SVG "V" mark whose geometry is lifted verbatim from the brand SVG
+ * (`design/vibelytech_logo_white.svg`): a blue gradient left blade with a
+ * pixel-dispersion trail off the upper-left, a thick violet right arm, meeting
+ * at a bottom vertex. When `withWord`, follows with "Vibely" + "Tech" wordmark.
  *
- * Each instance derives its gradient id from React's `useId()`, which produces
+ * Each instance derives its gradient ids from React's `useId()`, which produces
  * the same value on the server and client — avoiding SVG id collisions when
  * rendered multiple times AND hydration mismatches.
  */
@@ -34,8 +35,7 @@ export function Logo({ withWord = false, className, wordClassName }: LogoProps) 
           two-face shape (lighter front + darker side) for a 3D crease. The two
           arms meet at a bottom vertex; one blue→violet diagonal gradient. */}
       <svg
-        viewBox="0 0 46 40"
-        fill="none"
+        viewBox="34 30 307 246"
         xmlns="http://www.w3.org/2000/svg"
         className="h-8 w-auto shrink-0"
         aria-hidden={withWord ? true : undefined}
@@ -43,29 +43,73 @@ export function Logo({ withWord = false, className, wordClassName }: LogoProps) 
         aria-label={withWord ? undefined : "VibelyTech"}
       >
         <defs>
-          {/* Bottom-left (blue) → top-right (violet). */}
-          <linearGradient id={gradId} x1="0%" y1="100%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#2563eb" />
-            <stop offset="45%" stopColor="#4f46e5" />
-            <stop offset="100%" stopColor="#a855f7" />
+          {/* Main blade: blue → violet (exact from brand SVG). */}
+          <linearGradient
+            id={`${gradId}-1`}
+            x1="154.01"
+            y1="185.91"
+            x2="200.17"
+            y2="114.71"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset=".13" stopColor="#1e7bfe" />
+            <stop offset="1" stopColor="#8133f2" />
+          </linearGradient>
+          {/* Bottom-vertex overlay: transparent blue → deep indigo. */}
+          <linearGradient
+            id={`${gradId}-2`}
+            x1="100.83"
+            y1="81.73"
+            x2="213.18"
+            y2="255.41"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset=".53" stopColor="#1e7bfe" stopOpacity="0" />
+            <stop offset="1" stopColor="#4a2fde" />
+          </linearGradient>
+          {/* One pixel square accent gradient. */}
+          <linearGradient
+            id={`${gradId}-3`}
+            x1="77.53"
+            y1="1761.36"
+            x2="87.72"
+            y2="1761.36"
+            gradientTransform="translate(0 1888.31) scale(1 -1)"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset="0" stopColor="#6c2df7" />
+            <stop offset="1" stopColor="#8133f2" />
           </linearGradient>
         </defs>
 
-        {/* Pixel-dispersion trail — off the upper-left tip of the blue blade. */}
-        <rect x="5.5" y="9" width="4" height="4" rx="0.6" fill={`url(#${gradId})`} opacity="0.85" />
-        <rect x="2" y="6" width="3" height="3" rx="0.5" fill={`url(#${gradId})`} opacity="0.6" />
-        <rect x="5" y="3.4" width="2.3" height="2.3" rx="0.4" fill={`url(#${gradId})`} opacity="0.45" />
-        <rect x="0.6" y="2.2" width="1.7" height="1.7" rx="0.3" fill={`url(#${gradId})`} opacity="0.32" />
-        <rect x="9" y="4.6" width="1.5" height="1.5" rx="0.3" fill={`url(#${gradId})`} opacity="0.28" />
-
-        {/* Left blade — thin, shorter, blue end of the gradient. */}
-        <path d="M8 15 L12 14 L20.5 33 L16.5 36 Z" fill={`url(#${gradId})`} />
-
-        {/* Right ribbon — tall + thick, folded. Front (lighter) face. */}
-        <path d="M18 36 L26 9 L33 6.5 Z" fill={`url(#${gradId})`} />
-        {/* Right ribbon — darker side face (gradient + dark overlay = crease). */}
-        <path d="M18 36 L33 6.5 L40 5 Z" fill={`url(#${gradId})`} />
-        <path d="M18 36 L33 6.5 L40 5 Z" fill="#1e1145" opacity="0.34" />
+        {/* Exact VibelyTech "V" mark — pixel-dispersion trail (upper-left),
+            blue gradient left blade, thick violet right arm, meeting at a
+            bottom vertex. Geometry lifted verbatim from the brand SVG. */}
+        <rect x="54.77" y="34.1" width="12.6" height="13.2" fill="#1b7dff" />
+        <polygon
+          points="336.47 62.1 238.47 227.8 235.87 227.8 232.57 222 201.87 168.2 215.57 144.4 256.87 73.1 336.47 62.1"
+          fill="#7734e4"
+        />
+        <polygon
+          points="234.17 223.1 232.57 222 201.87 168.2 215.57 144.4 216.37 144.9 234.17 223.1"
+          fill="#5824c7"
+        />
+        <path
+          d="m222.47,221.5l-88.4-149.3h-16.8v7.7h-8.4l-1,10.8h21.2v22.1h-21.2v-22.1l-6.2,22.1v15.1h14.6v13.9h-14.6l69.2,114.9,41.9,14.2,25.7-43.1-16-6.3Zm-89.6-133.2h-9.3v-9.7h9.3v9.7Z"
+          fill={`url(#${gradId}-1)`}
+        />
+        <polygon
+          points="222.47 221.5 184.65 157.63 111.2 157.63 170.87 256.7 212.77 270.9 238.47 227.8 222.47 221.5"
+          fill={`url(#${gradId}-2)`}
+        />
+        <rect x="38.97" y="69.2" width="10.2" height="10.7" fill="#75b0e8" />
+        <rect x="77.57" y="121.6" width="10.2" height="10.7" fill={`url(#${gradId}-3)`} />
+        <rect x="57.77" y="80.3" width="19.8" height="20.7" fill="#1b7dff" />
+        <rect x="87.77" y="90.7" width="21.2" height="22.2" fill="#1b7dff" />
+        <polygon
+          points="108.87 65.3 108.87 72.2 86.77 72.2 86.77 57.2 101.77 57.2 101.77 65.3 108.87 65.3"
+          fill="#1b7dff"
+        />
       </svg>
 
       {/* ── Wordmark ── */}
