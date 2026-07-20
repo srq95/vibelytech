@@ -196,7 +196,7 @@ export default function Header() {
                 className={cn(
                   'inline-flex items-center justify-center gap-2 rounded-full cursor-pointer select-none',
                   'bg-brand-gradient text-white font-semibold px-6 py-2.5 text-sm',
-                  'shadow-[0_0_0_0_rgba(37,99,235,0)] hover:shadow-[0_0_24px_6px_rgba(37,99,235,0.40)]',
+                  'shadow-[0_0_0_0_rgb(var(--brand-glow)_/_0)] hover:shadow-[0_0_24px_6px_rgb(var(--brand-glow)_/_0.40)]',
                   'hover:scale-[1.03] active:scale-[0.97] transition-all duration-200',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2',
                 )}

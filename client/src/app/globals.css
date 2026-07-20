@@ -17,15 +17,17 @@
   --muted: #5b6477;
   --border: rgba(10, 15, 30, 0.08);
 
-  /* brand */
-  --brand-blue: #2563eb;
-  --brand-blue-bright: #3b82f6;
-  --brand-blue-deep: #1d4ed8;
-  --brand-violet: #7c3aed;
-  --brand-violet-bright: #a855f7;
-  --brand-violet-deep: #5b21b6;
-  --brand-start: #2563eb;
-  --brand-end: #7c3aed;
+  /* brand — sourced from the VibelyTech logo SVG (#1e7bfe → #8133f2) */
+  --brand-blue: #1e7bfe;
+  --brand-blue-bright: #4f96ff;
+  --brand-blue-deep: #155fce;
+  --brand-violet: #8133f2;
+  --brand-violet-bright: #9b5cf5;
+  --brand-violet-deep: #5824c7;
+  --brand-start: #1e7bfe;
+  --brand-end: #8133f2;
+  /* rgb channels of the brand blue, for rgb(var(--brand-glow) / a) in shadows */
+  --brand-glow: 30 123 254;
 
   /* glass */
   --glass-bg: rgba(255, 255, 255, 0.6);
@@ -34,7 +36,7 @@
   --glass-shadow: rgba(13, 22, 49, 0.12);
 
   /* effects */
-  --glow: rgba(37, 99, 235, 0.35);
+  --glow: rgb(var(--brand-glow) / 0.35);
 }
 
 .dark {
@@ -45,15 +47,17 @@
   --muted: #94a3c2;
   --border: rgba(255, 255, 255, 0.08);
 
-  --brand-start: #3b82f6;
-  --brand-end: #a855f7;
+  /* keep the gradient logo-exact in dark; brighten only the ambient glow */
+  --brand-start: #2f88ff;
+  --brand-end: #9048f5;
+  --brand-glow: 79 150 255;
 
   --glass-bg: rgba(17, 26, 48, 0.5);
   --glass-border: rgba(255, 255, 255, 0.12);
   --glass-highlight: rgba(255, 255, 255, 0.16);
   --glass-shadow: rgba(0, 0, 0, 0.5);
 
-  --glow: rgba(59, 130, 246, 0.45);
+  --glow: rgb(var(--brand-glow) / 0.45);
 }
 
 @theme inline {

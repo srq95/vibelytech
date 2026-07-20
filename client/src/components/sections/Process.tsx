@@ -198,7 +198,7 @@ export default function Process() {
                     className={cn(
                       "absolute left-[0.875rem] top-10 h-[0.875rem] w-[0.875rem] rounded-full border-2 transition-all duration-500",
                       isActive(i)
-                        ? "border-brand-blue bg-brand-gradient scale-125 shadow-[0_0_12px_2px_rgba(37,99,235,0.4)]"
+                        ? "border-brand-blue bg-brand-gradient scale-125 shadow-[0_0_12px_2px_rgb(var(--brand-glow)_/_0.4)]"
                         : "border-border bg-surface-2",
                     )}
                   />

@@ -33,7 +33,7 @@ export default function Error({
       <button
         type="button"
         onClick={() => reset()}
-        className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-brand-gradient px-8 py-3.5 text-base font-semibold text-white outline-none transition-all duration-200 hover:scale-[1.03] hover:shadow-[0_0_24px_6px_rgba(37,99,235,0.40)] focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 active:scale-[0.97]"
+        className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-brand-gradient px-8 py-3.5 text-base font-semibold text-white outline-none transition-all duration-200 hover:scale-[1.03] hover:shadow-[0_0_24px_6px_rgb(var(--brand-glow)_/_0.40)] focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 active:scale-[0.97]"
       >
         Try again
       </button>

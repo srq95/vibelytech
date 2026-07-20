@@ -20,13 +20,13 @@ type ButtonProps = ButtonBaseProps &
 const variantClasses: Record<Variant, string> = {
   primary: [
     "bg-brand-gradient text-white font-semibold",
-    "shadow-[0_0_0_0_rgba(37,99,235,0)]",
-    "hover:shadow-[0_0_24px_6px_rgba(37,99,235,0.40)] hover:scale-[1.03]",
+    "shadow-[0_0_0_0_rgb(var(--brand-glow)_/_0)]",
+    "hover:shadow-[0_0_24px_6px_rgb(var(--brand-glow)_/_0.40)] hover:scale-[1.03]",
     "active:scale-[0.97]",
   ].join(" "),
   glass: [
     "glass text-foreground font-medium",
-    "hover:shadow-[0_0_20px_4px_rgba(37,99,235,0.18)] hover:scale-[1.02]",
+    "hover:shadow-[0_0_20px_4px_rgb(var(--brand-glow)_/_0.18)] hover:scale-[1.02]",
     "active:scale-[0.97]",
   ].join(" "),
   ghost: [
