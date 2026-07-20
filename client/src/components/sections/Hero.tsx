@@ -219,7 +219,7 @@ export default function Hero() {
 
           {/* ----------------------------- Visual column ----------------------------- */}
           <div className="relative order-first lg:order-last">
-            <div className="hero-visual relative mx-auto aspect-square w-full max-w-[34rem] will-change-transform">
+            <div className="hero-visual relative mx-auto aspect-square w-full max-w-[42rem] will-change-transform">
               {/* Soft radial brand glow behind the V */}
               <div
                 aria-hidden="true"

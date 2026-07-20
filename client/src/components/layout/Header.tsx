@@ -84,8 +84,8 @@ export default function Header() {
         <div
           className={cn(
             'glass-strong rounded-full flex items-center justify-between',
-            'px-4 md:px-5 transition-all duration-300',
-            scrolled ? 'py-2 shadow-[0_12px_48px_-8px_var(--glass-shadow)]' : 'py-3',
+            'px-3 md:px-5 transition-all duration-300',
+            scrolled ? 'py-3 shadow-[0_12px_48px_-8px_var(--glass-shadow)]' : 'py-3',
           )}
         >
           {/* Logo — anchored to top of page */}

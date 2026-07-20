@@ -28,7 +28,7 @@ export function Logo({ withWord = false, className }: LogoProps) {
     return (
       // Height lives on the wrapper (default h-8, override via className); the
       // images fill it, so callers size the whole lockup with one class.
-      <span className={cn("inline-flex h-8 shrink-0 items-center", className)}>
+      <span className={cn("flex h-8 shrink-0 items-center", className)}>
         {/* Light background → dark-ink lockup.
             Plain <img>: a vector logo gains nothing from next/image raster
             optimization, and this avoids needing intrinsic width/height. */}

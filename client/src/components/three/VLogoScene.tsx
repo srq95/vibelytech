@@ -69,7 +69,12 @@ const EXTRUDE_OPTS: THREE.ExtrudeGeometryOptions = {
 /** Fraction of the smaller viewport dimension the whole mark (incl. the full
  *  range of pixel motion) is allowed to occupy — leaves padding so nothing
  *  clips while floating / rotating. */
-const FIT = 0.82;
+// Per-variant fill fraction of the smaller viewport dimension.
+// The normalized layout reserves room for the pixels' *scattered* start —
+// which only the preloader uses. In the hero the pixels merely drift, so the
+// V can be drawn much larger without clipping.
+const FIT_PRELOADER = 0.82;
+const FIT_HERO = 1.3;
 
 /* -------------------------------------------------------------------------- */
 /* Deterministic PRNG so framing (which depends on the scatter targets) is     */
@@ -289,7 +294,8 @@ function VContent({ variant, reducedMotion, isDark }: VContentProps) {
   const emissiveIntensity = isDark ? 0.32 : 0.16;
 
   // Base fit scale (normalised layout is ~1 unit across).
-  const fitScale = Math.min(viewport.width, viewport.height) * FIT;
+  const fitFraction = variant === "hero" ? FIT_HERO : FIT_PRELOADER;
+  const fitScale = Math.min(viewport.width, viewport.height) * fitFraction;
 
   const { normScale: N, center: C } = mark;
 
@@ -308,7 +314,8 @@ function VContent({ variant, reducedMotion, isDark }: VContentProps) {
     if (!animate) return;
     const t = state.clock.elapsedTime;
     const root = rootRef.current;
-    const fit = Math.min(state.viewport.width, state.viewport.height) * FIT;
+    const fit =
+      Math.min(state.viewport.width, state.viewport.height) * fitFraction;
 
     if (variant === "preloader") {
       const intro = easeOutCubic(Math.min(t / INTRO_DURATION, 1));
