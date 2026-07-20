@@ -155,7 +155,7 @@ export default function Preloader() {
         ref={uiRef}
         className="relative z-10 -mt-4 flex w-[min(80vw,360px)] flex-col items-center gap-5"
       >
-        <Logo withWord wordClassName="text-2xl" />
+        <Logo withWord className="h-9" />
 
         {/* Thin progress track + brand-gradient fill. */}
         <div className="h-px w-full overflow-hidden rounded-full bg-foreground/10">

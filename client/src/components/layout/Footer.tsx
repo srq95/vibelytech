@@ -113,7 +113,7 @@ export default function Footer() {
 
           {/* Brand block */}
           <div className="max-w-sm">
-            <Logo withWord className="mb-5" wordClassName="text-lg" />
+            <Logo withWord className="mb-5 h-9" />
             <p className="mb-6 max-w-xs text-sm leading-relaxed text-muted">
               {site.tagline} We partner with ambitious teams to design and
               engineer products people love.
