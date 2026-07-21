@@ -134,6 +134,9 @@
 html {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* Always reserve the scrollbar gutter so unlocking scroll after the
+     preloader doesn't narrow the page and reflow/resize the 3D canvas. */
+  scrollbar-gutter: stable;
 }
 
 body {

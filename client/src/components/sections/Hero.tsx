@@ -41,15 +41,24 @@ export default function Hero() {
     () => {
       const wordInners = gsap.utils.toArray<HTMLElement>(".hero-word-inner");
       const reveals = gsap.utils.toArray<HTMLElement>("[data-hero-reveal]");
-      const glow = ".hero-visual";
+      // IMPORTANT: `.hero-visual` wraps the R3F <Canvas>. R3F measures the
+      // canvas with getBoundingClientRect, which IS affected by CSS transforms,
+      // and a transform change fires no ResizeObserver. Scaling this element
+      // therefore bakes in an undersized viewport that only corrects on the
+      // next scroll/resize (a visible size jump). So: fade `.hero-visual`
+      // (opacity is measurement-safe) and scale only `.hero-glow`, which sits
+      // beside the canvas rather than wrapping it.
+      const visual = ".hero-visual";
+      const glow = ".hero-glow";
 
       // Reduced motion (or SSR-default fallback): show everything immediately.
       if (reducedMotion) {
-        gsap.set([...wordInners, ...reveals, glow], {
+        gsap.set([...wordInners, ...reveals, visual, glow], {
           clearProps: "all",
         });
         gsap.set([...wordInners, ...reveals], { opacity: 1, yPercent: 0, y: 0 });
-        gsap.set(glow, { opacity: 1, scale: 1 });
+        gsap.set(visual, { opacity: 1 });
+        gsap.set(glow, { scale: 1 });
         return;
       }
 
@@ -57,7 +66,8 @@ export default function Hero() {
       // the preloader hands off.
       gsap.set(wordInners, { yPercent: 120, opacity: 0 });
       gsap.set(reveals, { y: 40, opacity: 0 });
-      gsap.set(glow, { opacity: 0, scale: 0.82 });
+      gsap.set(visual, { opacity: 0 });
+      gsap.set(glow, { scale: 0.82 });
 
       // Hold the hidden state until the loader signals it's done.
       if (!isReady) return;
@@ -66,7 +76,8 @@ export default function Hero() {
         defaults: { ease: "power3.out" },
       });
 
-      tl.to(glow, { opacity: 1, scale: 1, duration: 1.2, ease: "power2.out" }, 0)
+      tl.to(visual, { opacity: 1, duration: 1.2, ease: "power2.out" }, 0)
+        .to(glow, { scale: 1, duration: 1.2, ease: "power2.out" }, 0)
         .to(
           '[data-hero-reveal="eyebrow"]',
           { y: 0, opacity: 1, duration: 0.6 },
@@ -223,7 +234,7 @@ export default function Hero() {
               {/* Soft radial brand glow behind the V */}
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-[8%] rounded-full bg-[radial-gradient(circle_at_center,var(--glow),transparent_68%)] blur-2xl"
+                className="hero-glow pointer-events-none absolute inset-[8%] rounded-full bg-[radial-gradient(circle_at_center,var(--glow),transparent_68%)] blur-2xl"
               />
               <VLogoCanvas variant="hero" className="relative z-10" />
             </div>
