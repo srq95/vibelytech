@@ -52,8 +52,14 @@ export function Logo({ withWord = false, className }: LogoProps) {
   return <LogoMark className={className} />;
 }
 
-/** Inline "V" mark (icon-only) — exact brand geometry. */
-function LogoMark({ className }: { className?: string }) {
+/**
+ * Inline "V" mark (icon-only) — exact brand geometry.
+ *
+ * Exported so every "V" in the UI (icons, decorative watermarks) uses the real
+ * mark with its pixel-dispersion elements, rather than a text "V" glyph.
+ * Size it with `className` (e.g. `w-[42vw] h-auto opacity-5`).
+ */
+export function LogoMark({ className }: { className?: string }) {
   const rawId = useId();
   const gradId = `vt-logo-grad-${rawId.replace(/:/g, "")}`;
 

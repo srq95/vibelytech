@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Magnetic } from "@/components/ui/Magnetic";
 import { GradientText } from "@/components/ui/GradientText";
 import { Reveal } from "@/components/ui/Reveal";
+import { LogoMark } from "@/components/layout/Logo";
 
 // Short "City, ST" derived from the full postal address for an elegant
 // location trust-touch (e.g. "Austin, TX").
@@ -51,12 +52,12 @@ export default function CTA() {
                 aria-hidden="true"
                 className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--glow),transparent_60%)] opacity-40"
               />
-              {/* Oversized watermark "V" */}
+              {/* Oversized watermark — the real brand mark, not a "V" glyph */}
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute -bottom-24 -right-8 select-none text-[20rem] font-black leading-none text-gradient opacity-[0.05] sm:-right-2 md:text-[26rem]"
+                className="pointer-events-none absolute -bottom-24 -right-8 select-none sm:-right-2"
               >
-                V
+                <LogoMark className="h-auto w-[26rem] opacity-[0.07] md:w-[34rem]" />
               </div>
 
               <div className="relative mx-auto flex max-w-3xl flex-col items-center">
