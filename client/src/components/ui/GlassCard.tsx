@@ -33,7 +33,7 @@ export function GlassCard({ children, className, interactive }: GlassCardProps) 
         ref={cardRef}
         className={cn(
           "glass rounded-3xl p-6 relative overflow-hidden transition-transform duration-300",
-          "hover:-translate-y-1 hover:shadow-[0_20px_60px_-10px_rgba(37,99,235,0.25)]",
+          "hover:-translate-y-1 hover:shadow-[0_20px_60px_-10px_rgb(var(--brand-glow)_/_0.25)]",
           "group",
           className,
         )}
@@ -52,7 +52,7 @@ export function GlassCard({ children, className, interactive }: GlassCardProps) 
           className="pointer-events-none absolute inset-0 rounded-3xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
           style={{
             background:
-              "radial-gradient(circle 220px at var(--mx) var(--my), rgba(37,99,235,0.12), transparent 70%)",
+              "radial-gradient(circle 220px at var(--mx) var(--my), rgb(var(--brand-glow) / 0.12), transparent 70%)",
           }}
         />
         {children}

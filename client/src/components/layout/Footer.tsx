@@ -1,4 +1,4 @@
-import { Logo } from '@/components/layout/Logo';
+import { Logo, LogoMark } from '@/components/layout/Logo';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { Container } from '@/components/ui/Container';
 import { site, socialLinks, footerColumns } from '@/config/site';
@@ -101,9 +101,7 @@ export default function Footer() {
         className="pointer-events-none absolute -bottom-[14vw] left-1/2 -z-10 -translate-x-1/2 select-none overflow-hidden"
         aria-hidden="true"
       >
-        <span className="text-[34vw] font-black leading-none tracking-tighter text-gradient opacity-[0.05]">
-          V
-        </span>
+        <LogoMark className="h-auto w-[46vw] opacity-[0.06]" />
       </div>
 
       <Container className="relative pt-20 pb-10 md:pt-24 md:pb-12">
@@ -113,7 +111,7 @@ export default function Footer() {
 
           {/* Brand block */}
           <div className="max-w-sm">
-            <Logo withWord className="mb-5" wordClassName="text-lg" />
+            <Logo withWord className="mb-5 h-9" />
             <p className="mb-6 max-w-xs text-sm leading-relaxed text-muted">
               {site.tagline} We partner with ambitious teams to design and
               engineer products people love.

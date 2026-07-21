@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { useEffect, useMemo, useRef } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { AdaptiveDpr, AdaptiveEvents } from "@react-three/drei";
 import { useTheme } from "next-themes";
 import * as THREE from "three";
+import {
+  SVGLoader,
+  type SVGResult,
+} from "three/examples/jsm/loaders/SVGLoader.js";
 
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/utils";
@@ -17,14 +21,117 @@ interface VLogoSceneProps {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Geometry                                                                   */
+/* Brand mark — inlined SVG (source of truth: public/brand/vibelytech-mark.svg)*/
+/* Parsed with SVGLoader so there is no network fetch / Suspense boundary.     */
 /* -------------------------------------------------------------------------- */
 
-const COLOR_BOTTOM = new THREE.Color("#2563eb"); // brand blue (V's point)
-const COLOR_TOP = new THREE.Color("#a855f7"); // brand violet (V's arms)
+const MARK_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="34 30 307 246">
+  <defs>
+    <linearGradient id="vt-fav-1" x1="154.01" y1="185.91" x2="200.17" y2="114.71" gradientUnits="userSpaceOnUse">
+      <stop offset=".13" stop-color="#1e7bfe"/>
+      <stop offset="1" stop-color="#8133f2"/>
+    </linearGradient>
+    <linearGradient id="vt-fav-2" x1="100.83" y1="81.73" x2="213.18" y2="255.41" gradientUnits="userSpaceOnUse">
+      <stop offset=".53" stop-color="#1e7bfe" stop-opacity="0"/>
+      <stop offset="1" stop-color="#4a2fde"/>
+    </linearGradient>
+    <linearGradient id="vt-fav-3" x1="77.53" y1="1761.36" x2="87.72" y2="1761.36" gradientTransform="translate(0 1888.31) scale(1 -1)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6c2df7"/>
+      <stop offset="1" stop-color="#8133f2"/>
+    </linearGradient>
+  </defs>
+  <rect x="54.77" y="34.1" width="12.6" height="13.2" fill="#1b7dff"/>
+  <polygon points="336.47 62.1 238.47 227.8 235.87 227.8 232.57 222 201.87 168.2 215.57 144.4 256.87 73.1 336.47 62.1" fill="#7734e4"/>
+  <polygon points="234.17 223.1 232.57 222 201.87 168.2 215.57 144.4 216.37 144.9 234.17 223.1" fill="#5824c7"/>
+  <path d="m222.47,221.5l-88.4-149.3h-16.8v7.7h-8.4l-1,10.8h21.2v22.1h-21.2v-22.1l-6.2,22.1v15.1h14.6v13.9h-14.6l69.2,114.9,41.9,14.2,25.7-43.1-16-6.3Zm-89.6-133.2h-9.3v-9.7h9.3v9.7Z" fill="url(#vt-fav-1)"/>
+  <polygon points="222.47 221.5 184.65 157.63 111.2 157.63 170.87 256.7 212.77 270.9 238.47 227.8 222.47 221.5" fill="url(#vt-fav-2)"/>
+  <rect x="38.97" y="69.2" width="10.2" height="10.7" fill="#75b0e8"/>
+  <rect x="77.57" y="121.6" width="10.2" height="10.7" fill="url(#vt-fav-3)"/>
+  <rect x="57.77" y="80.3" width="19.8" height="20.7" fill="#1b7dff"/>
+  <rect x="87.77" y="90.7" width="21.2" height="22.2" fill="#1b7dff"/>
+  <polygon points="108.87 65.3 108.87 72.2 86.77 72.2 86.77 57.2 101.77 57.2 101.77 65.3 108.87 65.3" fill="#1b7dff"/>
+</svg>`;
 
-/** Map a blue→violet gradient onto vertices along the Y axis. */
-function applyGradientColors(geo: THREE.BufferGeometry): void {
+/* Blade gradient endpoints (SVGLoader can't resolve url(...) fills). */
+const BLADE_BLUE = new THREE.Color("#1e7bfe"); // V point (bottom)
+const BLADE_VIOLET = new THREE.Color("#8133f2"); // toward the top
+const PIXEL_GRAD_VIOLET = new THREE.Color("#7730f5"); // avg of url(#vt-fav-3)
+
+const EXTRUDE_OPTS: THREE.ExtrudeGeometryOptions = {
+  depth: 24,
+  bevelEnabled: true,
+  bevelThickness: 2.6,
+  bevelSize: 1.8,
+  bevelSegments: 2,
+  curveSegments: 6,
+};
+
+/** Fraction of the smaller viewport dimension the whole mark (incl. the full
+ *  range of pixel motion) is allowed to occupy — leaves padding so nothing
+ *  clips while floating / rotating. */
+// Per-variant fill fraction of the smaller viewport dimension.
+// The normalized layout reserves room for the pixels' *scattered* start —
+// which only the preloader uses. In the hero the pixels merely drift, so the
+// V can be drawn much larger without clipping.
+const FIT_PRELOADER = 0.82;
+// Hero frames on the tight rest-only box, so this is a near-direct fill
+// fraction. The headroom absorbs the pointer parallax + idle float.
+const FIT_HERO = 0.9;
+
+/* -------------------------------------------------------------------------- */
+/* Deterministic PRNG so framing (which depends on the scatter targets) is     */
+/* identical across mounts and both variants.                                  */
+/* -------------------------------------------------------------------------- */
+
+function mulberry32(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Mark construction                                                          */
+/* -------------------------------------------------------------------------- */
+
+interface SvgFillStyle {
+  fill?: string;
+}
+
+interface CoreDesc {
+  geometry: THREE.BufferGeometry;
+  color: THREE.Color;
+  vertexColors: boolean;
+}
+
+interface PixelDesc {
+  geometry: THREE.BufferGeometry; // centred on its own centroid
+  rest: THREE.Vector3; // resting centre, raw SVG coords (z = 0)
+  scatter: THREE.Vector3; // offset to the pre-assembly scattered start
+  color: THREE.Color;
+  seed: number;
+}
+
+interface Mark {
+  core: CoreDesc[];
+  pixels: PixelDesc[];
+  /** Centre incl. scattered pixel starts (preloader) — raw SVG coords. */
+  center: THREE.Vector3;
+  /** 1 / maxDim of the scatter-inclusive box → normalises to ~1 unit. */
+  normScale: number;
+  /** Centre of the mark at rest only (hero) — raw SVG coords. */
+  restCenter: THREE.Vector3;
+  /** 1 / maxDim of the rest-only box → tight normalisation for the hero. */
+  restNormScale: number;
+}
+
+/** Paint a blue→violet gradient onto blade vertices along the SVG Y axis
+ *  (larger SVG-y = the V point = blue; smaller SVG-y = top = violet). */
+function applyBladeGradient(geo: THREE.BufferGeometry): void {
   geo.computeBoundingBox();
   const bb = geo.boundingBox;
   if (!bb) return;
@@ -34,8 +141,8 @@ function applyGradientColors(geo: THREE.BufferGeometry): void {
   const colors = new Float32Array(pos.count * 3);
   const tmp = new THREE.Color();
   for (let i = 0; i < pos.count; i += 1) {
-    const t = (pos.getY(i) - minY) / spanY;
-    tmp.copy(COLOR_BOTTOM).lerp(COLOR_TOP, t);
+    const t = (pos.getY(i) - minY) / spanY; // 0 = top(violet), 1 = bottom(blue)
+    tmp.copy(BLADE_VIOLET).lerp(BLADE_BLUE, t);
     colors[i * 3] = tmp.r;
     colors[i * 3 + 1] = tmp.g;
     colors[i * 3 + 2] = tmp.b;
@@ -43,73 +150,158 @@ function applyGradientColors(geo: THREE.BufferGeometry): void {
   geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
 }
 
-/** Procedural extruded, bevelled "V" built from a thick-chevron 2D path. */
-function buildVGeometry(): THREE.BufferGeometry {
-  const shape = new THREE.Shape();
-  // Outer V: top-left → bottom point → top-right
-  shape.moveTo(-1.0, 1.1);
-  shape.lineTo(0, -1.1);
-  shape.lineTo(1.0, 1.1);
-  // Inner notch (back up the inside of the chevron)
-  shape.lineTo(0.5, 1.1);
-  shape.lineTo(0, -0.25);
-  shape.lineTo(-0.5, 1.1);
-  shape.closePath();
-
-  const geo = new THREE.ExtrudeGeometry(shape, {
-    depth: 0.45,
-    bevelEnabled: true,
-    bevelThickness: 0.09,
-    bevelSize: 0.07,
-    bevelSegments: 4,
-    curveSegments: 8,
-  });
-  geo.center();
-  applyGradientColors(geo);
-  return geo;
-}
-
-/* -------------------------------------------------------------------------- */
-/* Pixel-dispersion cube field                                                */
-/* -------------------------------------------------------------------------- */
-
-interface CubeData {
-  targets: Float32Array; // resting position (clustered upper-left of the V)
-  starts: Float32Array; // scattered origin for the preloader assembly
-  seeds: Float32Array; // per-cube randomness for stagger + drift
-  sizes: Float32Array; // per-cube scale
-}
-
-function buildCubes(count: number): CubeData {
-  const targets = new Float32Array(count * 3);
-  const starts = new Float32Array(count * 3);
-  const seeds = new Float32Array(count);
-  const sizes = new Float32Array(count);
-  for (let i = 0; i < count; i += 1) {
-    // Cluster toward the upper-left of the V (the logo's pixel trail).
-    const tx = -1.5 + Math.random() * 1.7; // mostly negative x
-    const ty = 0.2 + Math.random() * 1.5; // upper half
-    const tz = (Math.random() - 0.5) * 0.7;
-    targets[i * 3] = tx;
-    targets[i * 3 + 1] = ty;
-    targets[i * 3 + 2] = tz;
-
-    // Scattered start: pushed outward from the target.
-    const angle = Math.random() * Math.PI * 2;
-    const radius = 2.5 + Math.random() * 4;
-    starts[i * 3] = tx + Math.cos(angle) * radius;
-    starts[i * 3 + 1] = ty + Math.sin(angle) * radius * 0.7 + 1.5;
-    starts[i * 3 + 2] = tz + (Math.random() - 0.5) * 4;
-
-    seeds[i] = Math.random();
-    sizes[i] = 0.05 + Math.random() * 0.08;
+function classify(fill: string): "blade" | "pixel" | "skip" | "core" {
+  const f = fill.toLowerCase();
+  if (f.includes("vt-fav-2")) return "skip"; // 2D shading overlay — not needed in 3D
+  if (f.includes("vt-fav-1")) return "blade";
+  if (f.includes("vt-fav-3") || f.includes("1b7dff") || f.includes("75b0e8")) {
+    return "pixel";
   }
-  return { targets, starts, seeds, sizes };
+  return "core";
 }
+
+function buildMark(): Mark {
+  const parsed: SVGResult = new SVGLoader().parse(MARK_SVG);
+  const rng = mulberry32(0x5eed);
+
+  const core: CoreDesc[] = [];
+  const pixels: Omit<PixelDesc, "scatter">[] = [];
+
+  // First pass: build geometry, classify, gather rest layout.
+  for (const path of parsed.paths) {
+    const style = path.userData.style as SvgFillStyle | undefined;
+    const fill = style?.fill ?? "";
+    const kind = classify(fill);
+    if (kind === "skip") continue;
+
+    const shapes = path.toShapes();
+    if (shapes.length === 0) continue;
+
+    const geo = new THREE.ExtrudeGeometry(shapes, EXTRUDE_OPTS);
+    geo.computeBoundingBox();
+    const bb = geo.boundingBox;
+    if (!bb) continue;
+    // Straddle z = 0 so rotation looks balanced.
+    const zc = (bb.min.z + bb.max.z) / 2;
+
+    if (kind === "pixel") {
+      const c = new THREE.Vector3();
+      bb.getCenter(c);
+      geo.translate(-c.x, -c.y, -zc); // centre on centroid
+      const color =
+        fill.toLowerCase().includes("vt-fav-3")
+          ? PIXEL_GRAD_VIOLET.clone()
+          : path.color.clone();
+      pixels.push({
+        geometry: geo,
+        rest: new THREE.Vector3(c.x, c.y, 0),
+        color,
+        seed: rng(),
+      });
+    } else {
+      geo.translate(0, 0, -zc);
+      if (kind === "blade") applyBladeGradient(geo);
+      core.push({
+        geometry: geo,
+        color: kind === "blade" ? BLADE_BLUE.clone() : path.color.clone(),
+        vertexColors: kind === "blade",
+      });
+    }
+  }
+
+  // Mark centre (from the solid V core) — used to aim the scatter outward.
+  const coreBox = new THREE.Box3();
+  for (const c of core) {
+    c.geometry.computeBoundingBox();
+    if (c.geometry.boundingBox) coreBox.union(c.geometry.boundingBox);
+  }
+  const coreCenter = new THREE.Vector3();
+  coreBox.getCenter(coreCenter);
+
+  // Assign each pixel a scattered start: pushed outward (biased up-left, the
+  // direction of the mark's real dispersion trail) plus a little depth.
+  const dir = new THREE.Vector3();
+  const pixelsFull: PixelDesc[] = pixels.map((p) => {
+    dir.set(p.rest.x - coreCenter.x, p.rest.y - coreCenter.y, 0);
+    if (dir.lengthSq() < 1e-3) dir.set(-1, -1, 0);
+    dir.normalize();
+    const dist = 46 + rng() * 46;
+    const scatter = new THREE.Vector3(
+      dir.x * dist - 14 - rng() * 18, // extra left  (−x)
+      dir.y * dist - 14 - rng() * 18, // extra up    (−y in SVG space)
+      (rng() - 0.5) * 70,
+    );
+    return { ...p, scatter };
+  });
+
+  // Two framing boxes:
+  //  • `box`     — core + every pixel at BOTH rest and scattered start. Used by
+  //                the preloader, whose assemble animation needs that room.
+  //  • `restBox` — core + pixels at REST only. Used by the hero, which never
+  //                scatters. Framing the hero with the scatter-inclusive box
+  //                both shrank the mark AND (because the scatter is biased
+  //                up-left) pushed it down-right of centre, clipping it.
+  const box = new THREE.Box3();
+  const restBox = new THREE.Box3();
+  for (const c of core) {
+    c.geometry.computeBoundingBox();
+    if (c.geometry.boundingBox) {
+      box.union(c.geometry.boundingBox);
+      restBox.union(c.geometry.boundingBox);
+    }
+  }
+  const half = new THREE.Vector3();
+  for (const p of pixelsFull) {
+    p.geometry.computeBoundingBox();
+    const pb = p.geometry.boundingBox;
+    if (!pb) continue;
+    pb.getSize(half).multiplyScalar(0.5);
+    // rest extent — counts toward BOTH boxes
+    const rMin = new THREE.Vector3(p.rest.x - half.x, p.rest.y - half.y, 0);
+    const rMax = new THREE.Vector3(p.rest.x + half.x, p.rest.y + half.y, 0);
+    box.expandByPoint(rMin);
+    box.expandByPoint(rMax);
+    restBox.expandByPoint(rMin);
+    restBox.expandByPoint(rMax);
+    // scattered-start extent — preloader box only
+    const s = p.rest.clone().add(p.scatter);
+    box.expandByPoint(new THREE.Vector3(s.x - half.x, s.y - half.y, 0));
+    box.expandByPoint(new THREE.Vector3(s.x + half.x, s.y + half.y, 0));
+  }
+
+  const framing = (b: THREE.Box3) => {
+    const center = new THREE.Vector3();
+    b.getCenter(center);
+    center.z = 0;
+    const size = new THREE.Vector3();
+    b.getSize(size);
+    return { center, normScale: 1 / (Math.max(size.x, size.y) || 1) };
+  };
+
+  const full = framing(box);
+  const rest = framing(restBox);
+
+  return {
+    core,
+    pixels: pixelsFull,
+    center: full.center,
+    normScale: full.normScale,
+    restCenter: rest.center,
+    restNormScale: rest.normScale,
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Easing + animation constants                                               */
+/* -------------------------------------------------------------------------- */
 
 function easeOutCubic(t: number): number {
   return 1 - Math.pow(1 - t, 3);
 }
+
+const ASSEMBLE_DURATION = 0.9;
+const STAGGER_WINDOW = 0.75;
+const INTRO_DURATION = 1.3;
 
 /* -------------------------------------------------------------------------- */
 /* Scene content (inside the Canvas)                                          */
@@ -119,145 +311,143 @@ interface VContentProps {
   variant: Variant;
   reducedMotion: boolean;
   isDark: boolean;
-  cubeCount: number;
 }
 
-const ASSEMBLE_DURATION = 0.95;
-const STAGGER_WINDOW = 0.7;
+function VContent({ variant, reducedMotion, isDark }: VContentProps) {
+  const rootRef = useRef<THREE.Group>(null);
+  const pixelRefs = useRef<(THREE.Mesh | null)[]>([]);
 
-function VContent({ variant, reducedMotion, isDark, cubeCount }: VContentProps) {
-  const groupRef = useRef<THREE.Group>(null);
-  const cubesRef = useRef<THREE.InstancedMesh>(null);
+  const mark = useMemo(() => buildMark(), []);
+  const viewport = useThree((s) => s.viewport);
 
-  const geometry = useMemo(() => buildVGeometry(), []);
-  const cubes = useMemo(() => buildCubes(cubeCount), [cubeCount]);
-  const dummy = useMemo(() => new THREE.Object3D(), []);
-  const tmpColor = useMemo(() => new THREE.Color(), []);
+  const emissiveIntensity = isDark ? 0.32 : 0.16;
 
-  const emissiveIntensity = isDark ? 0.55 : 0.28;
+  // Base fit scale (normalised layout is ~1 unit across).
+  const fitFraction = variant === "hero" ? FIT_HERO : FIT_PRELOADER;
+  const fitScale = Math.min(viewport.width, viewport.height) * fitFraction;
 
-  // Dispose procedural geometry on unmount.
-  useEffect(() => () => geometry.dispose(), [geometry]);
+  // Hero frames on the tight rest-only box (correctly centred on the visible
+  // mark); the preloader frames on the scatter-inclusive box.
+  const isHero = variant === "hero";
+  const N = isHero ? mark.restNormScale : mark.normScale;
+  const C = isHero ? mark.restCenter : mark.center;
 
-  // Initialise instance matrices + per-cube colours.
-  useLayoutEffect(() => {
-    const mesh = cubesRef.current;
-    if (!mesh) return;
-    for (let i = 0; i < cubeCount; i += 1) {
-      const s = cubes.sizes[i];
-      const useStart = variant === "preloader" && !reducedMotion;
-      const ax = useStart ? cubes.starts : cubes.targets;
-      dummy.position.set(ax[i * 3], ax[i * 3 + 1], ax[i * 3 + 2]);
-      dummy.scale.setScalar(useStart ? 0 : s);
-      dummy.rotation.set(cubes.seeds[i] * 6, cubes.seeds[i] * 4, 0);
-      dummy.updateMatrix();
-      mesh.setMatrixAt(i, dummy.matrix);
-      tmpColor.copy(COLOR_BOTTOM).lerp(COLOR_TOP, cubes.seeds[i]);
-      mesh.setColorAt(i, tmpColor);
-    }
-    mesh.instanceMatrix.needsUpdate = true;
-    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-  }, [cubes, cubeCount, dummy, reducedMotion, tmpColor, variant]);
+  // Dispose the extruded geometry when this instance unmounts.
+  useEffect(() => {
+    return () => {
+      mark.core.forEach((c) => c.geometry.dispose());
+      mark.pixels.forEach((p) => p.geometry.dispose());
+    };
+  }, [mark]);
+
+  const animate = !reducedMotion;
+  const assembleOnMount = animate && variant === "preloader";
 
   useFrame((state, delta) => {
-    if (reducedMotion) return;
+    if (!animate) return;
     const t = state.clock.elapsedTime;
-    const group = groupRef.current;
-    const mesh = cubesRef.current;
+    const root = rootRef.current;
+    const fit =
+      Math.min(state.viewport.width, state.viewport.height) * fitFraction;
 
     if (variant === "preloader") {
-      // V assembles: scale + gentle spin in, then a slow continuous turn.
-      const intro = easeOutCubic(Math.min(t / 1.2, 1));
-      if (group) {
-        const scale = 0.55 + intro * 0.45;
-        group.scale.setScalar(scale);
-        group.rotation.y = (1 - intro) * 2.2 + t * 0.35;
-        group.rotation.x = (1 - intro) * 0.6;
+      const intro = easeOutCubic(Math.min(t / INTRO_DURATION, 1));
+      if (root) {
+        root.scale.setScalar(fit * (0.62 + 0.38 * intro));
+        root.rotation.y = (1 - intro) * 1.5 + t * 0.14;
+        root.rotation.x = (1 - intro) * 0.28;
+        root.position.set(0, 0, 0);
       }
-      if (mesh) {
-        for (let i = 0; i < cubeCount; i += 1) {
-          const local = (t - cubes.seeds[i] * STAGGER_WINDOW) / ASSEMBLE_DURATION;
-          const e = easeOutCubic(Math.max(0, Math.min(local, 1)));
-          const sx = cubes.starts[i * 3];
-          const sy = cubes.starts[i * 3 + 1];
-          const sz = cubes.starts[i * 3 + 2];
-          const gx = cubes.targets[i * 3];
-          const gy = cubes.targets[i * 3 + 1];
-          const gz = cubes.targets[i * 3 + 2];
-          dummy.position.set(
-            sx + (gx - sx) * e,
-            sy + (gy - sy) * e,
-            sz + (gz - sz) * e,
-          );
-          dummy.scale.setScalar(cubes.sizes[i] * e);
-          dummy.rotation.set(
-            cubes.seeds[i] * 6 + t * 0.8 * (1 - e),
-            cubes.seeds[i] * 4 + t * 0.8 * (1 - e),
-            0,
-          );
-          dummy.updateMatrix();
-          mesh.setMatrixAt(i, dummy.matrix);
-        }
-        mesh.instanceMatrix.needsUpdate = true;
+      for (let i = 0; i < mark.pixels.length; i += 1) {
+        const mesh = pixelRefs.current[i];
+        if (!mesh) continue;
+        const p = mark.pixels[i];
+        const local = (t - p.seed * STAGGER_WINDOW) / ASSEMBLE_DURATION;
+        const e = easeOutCubic(Math.max(0, Math.min(local, 1)));
+        const k = 1 - e;
+        mesh.position.set(
+          p.rest.x + p.scatter.x * k,
+          p.rest.y + p.scatter.y * k,
+          p.rest.z + p.scatter.z * k,
+        );
+        mesh.scale.setScalar(e);
+        mesh.rotation.set(
+          (p.seed * 6 + t * 0.9) * k,
+          (p.seed * 4 + t * 0.7) * k,
+          0,
+        );
       }
     } else {
-      // Hero: calm float + subtle pointer parallax, cubes drift in place.
-      if (group) {
-        const targetRotY = state.pointer.x * 0.35;
-        const targetRotX = -state.pointer.y * 0.25;
-        group.rotation.y += (targetRotY - group.rotation.y) * Math.min(delta * 2.5, 1);
-        group.rotation.x += (targetRotX - group.rotation.x) * Math.min(delta * 2.5, 1);
-        group.position.y = Math.sin(t * 0.8) * 0.08;
-        group.scale.setScalar(1);
+      // Hero: calm float + subtle pointer parallax; pixels drift gently.
+      if (root) {
+        const targetRotY = state.pointer.x * 0.3;
+        const targetRotX = -state.pointer.y * 0.22;
+        const lerp = Math.min(delta * 2.5, 1);
+        root.rotation.y += (targetRotY - root.rotation.y) * lerp;
+        root.rotation.x += (targetRotX - root.rotation.x) * lerp;
+        root.position.set(0, Math.sin(t * 0.7) * 0.025 * fit, 0);
+        root.scale.setScalar(fit);
       }
-      if (mesh) {
-        for (let i = 0; i < cubeCount; i += 1) {
-          const seed = cubes.seeds[i];
-          const gx = cubes.targets[i * 3];
-          const gy = cubes.targets[i * 3 + 1];
-          const gz = cubes.targets[i * 3 + 2];
-          dummy.position.set(
-            gx + Math.sin(t * 0.6 + seed * 9) * 0.06,
-            gy + Math.cos(t * 0.5 + seed * 7) * 0.07,
-            gz + Math.sin(t * 0.4 + seed * 5) * 0.05,
-          );
-          dummy.scale.setScalar(cubes.sizes[i]);
-          dummy.rotation.set(seed * 6 + t * 0.2, seed * 4 + t * 0.25, 0);
-          dummy.updateMatrix();
-          mesh.setMatrixAt(i, dummy.matrix);
-        }
-        mesh.instanceMatrix.needsUpdate = true;
+      for (let i = 0; i < mark.pixels.length; i += 1) {
+        const mesh = pixelRefs.current[i];
+        if (!mesh) continue;
+        const p = mark.pixels[i];
+        const s = p.seed;
+        mesh.position.set(
+          p.rest.x + Math.sin(t * 0.6 + s * 9) * 5,
+          p.rest.y + Math.cos(t * 0.5 + s * 7) * 5,
+          p.rest.z + Math.sin(t * 0.4 + s * 5) * 6,
+        );
+        mesh.rotation.set(
+          Math.sin(t * 0.3 + s * 3) * 0.15,
+          Math.cos(t * 0.25 + s * 4) * 0.15,
+          0,
+        );
+        mesh.scale.setScalar(1);
       }
     }
   });
 
-  return (
-    <group ref={groupRef}>
-      <mesh geometry={geometry} castShadow receiveShadow>
-        <meshStandardMaterial
-          vertexColors
-          metalness={0.6}
-          roughness={0.25}
-          emissive={"#5b21b6"}
-          emissiveIntensity={emissiveIntensity}
-          envMapIntensity={0.8}
-        />
-      </mesh>
+  const initialPixelScale = assembleOnMount ? 0 : 1;
 
-      <instancedMesh
-        ref={cubesRef}
-        args={[undefined, undefined, cubeCount]}
-        frustumCulled={false}
-      >
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial
-          metalness={0.5}
-          roughness={0.3}
-          emissive={"#3b82f6"}
-          emissiveIntensity={emissiveIntensity * 0.7}
-          toneMapped={false}
-        />
-      </instancedMesh>
+  return (
+    <group ref={rootRef} scale={fitScale}>
+      {/* Centre + flip (SVG is Y-down) + normalise to ~1 unit. */}
+      <group scale={[N, -N, N]} position={[-N * C.x, N * C.y, 0]}>
+        {mark.core.map((c, i) => (
+          <mesh key={`core-${i}`} geometry={c.geometry}>
+            <meshStandardMaterial
+              vertexColors={c.vertexColors}
+              color={c.vertexColors ? undefined : c.color}
+              metalness={0.42}
+              roughness={0.26}
+              emissive={c.color}
+              emissiveIntensity={emissiveIntensity}
+              envMapIntensity={0.85}
+            />
+          </mesh>
+        ))}
+
+        {mark.pixels.map((p, i) => (
+          <mesh
+            key={`px-${i}`}
+            ref={(m) => {
+              pixelRefs.current[i] = m;
+            }}
+            geometry={p.geometry}
+            position={p.rest}
+            scale={initialPixelScale}
+          >
+            <meshStandardMaterial
+              color={p.color}
+              metalness={0.45}
+              roughness={0.28}
+              emissive={p.color}
+              emissiveIntensity={emissiveIntensity * 1.4}
+            />
+          </mesh>
+        ))}
+      </group>
     </group>
   );
 }
@@ -277,13 +467,11 @@ export default function VLogoScene({
   // Read viewport width once to scale down work on small screens. Safe to read
   // synchronously: this module is only ever loaded client-side (ssr: false), so
   // there is no server render to mismatch against.
-  const [isSmall] = useState(
-    () => typeof window !== "undefined" && window.innerWidth < 768,
-  );
+  const isSmall =
+    typeof window !== "undefined" && window.innerWidth < 768;
 
-  const cubeCount = isSmall ? 28 : 52;
   const dprMax = isSmall ? 1.5 : 2;
-  const lightBoost = isDark ? 1.15 : 0.85;
+  const lightBoost = isDark ? 1.15 : 0.9;
 
   return (
     <Canvas
@@ -294,25 +482,20 @@ export default function VLogoScene({
       camera={{ position: [0, 0, 5], fov: 35 }}
       frameloop={reducedMotion ? "demand" : "always"}
     >
-      <ambientLight intensity={0.55 * lightBoost} />
+      <ambientLight intensity={0.6 * lightBoost} />
       <directionalLight
         position={[3, 4, 5]}
-        intensity={2.2 * lightBoost}
-        color={"#a855f7"}
+        intensity={2.1 * lightBoost}
+        color={"#8133f2"}
       />
       <directionalLight
-        position={[-4, -2, 3]}
+        position={[-4, -1, 3]}
         intensity={1.4 * lightBoost}
-        color={"#3b82f6"}
+        color={"#1e7bfe"}
       />
-      <pointLight position={[0, -3, 2]} intensity={2 * lightBoost} color={"#2563eb"} />
+      <pointLight position={[0, -3, 2]} intensity={1.8 * lightBoost} color={"#1e7bfe"} />
 
-      <VContent
-        variant={variant}
-        reducedMotion={reducedMotion}
-        isDark={isDark}
-        cubeCount={cubeCount}
-      />
+      <VContent variant={variant} reducedMotion={reducedMotion} isDark={isDark} />
 
       <AdaptiveDpr pixelated />
       <AdaptiveEvents />

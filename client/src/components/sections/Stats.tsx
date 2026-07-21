@@ -94,7 +94,7 @@ export default function Stats() {
               eyebrow="// about"
               title={
                 <>
-                  Five years <GradientText>building</GradientText> what&apos;s next
+                  Five years <GradientText>building</GradientText> &nbsp;what&apos;s next
                 </>
               }
               align="left"
