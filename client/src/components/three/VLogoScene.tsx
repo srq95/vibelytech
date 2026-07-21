@@ -74,7 +74,9 @@ const EXTRUDE_OPTS: THREE.ExtrudeGeometryOptions = {
 // which only the preloader uses. In the hero the pixels merely drift, so the
 // V can be drawn much larger without clipping.
 const FIT_PRELOADER = 0.82;
-const FIT_HERO = 1.3;
+// Hero frames on the tight rest-only box, so this is a near-direct fill
+// fraction. The headroom absorbs the pointer parallax + idle float.
+const FIT_HERO = 0.9;
 
 /* -------------------------------------------------------------------------- */
 /* Deterministic PRNG so framing (which depends on the scatter targets) is     */
@@ -117,8 +119,14 @@ interface PixelDesc {
 interface Mark {
   core: CoreDesc[];
   pixels: PixelDesc[];
-  center: THREE.Vector3; // combined centre (raw SVG coords)
-  normScale: number; // 1 / maxDim → normalises the whole layout to ~1 unit
+  /** Centre incl. scattered pixel starts (preloader) — raw SVG coords. */
+  center: THREE.Vector3;
+  /** 1 / maxDim of the scatter-inclusive box → normalises to ~1 unit. */
+  normScale: number;
+  /** Centre of the mark at rest only (hero) — raw SVG coords. */
+  restCenter: THREE.Vector3;
+  /** 1 / maxDim of the rest-only box → tight normalisation for the hero. */
+  restNormScale: number;
 }
 
 /** Paint a blue→violet gradient onto blade vertices along the SVG Y axis
@@ -226,12 +234,21 @@ function buildMark(): Mark {
     return { ...p, scatter };
   });
 
-  // Framing box: core + every pixel at BOTH rest and scattered start, so the
-  // mark plus the full range of motion always fits the frame.
+  // Two framing boxes:
+  //  • `box`     — core + every pixel at BOTH rest and scattered start. Used by
+  //                the preloader, whose assemble animation needs that room.
+  //  • `restBox` — core + pixels at REST only. Used by the hero, which never
+  //                scatters. Framing the hero with the scatter-inclusive box
+  //                both shrank the mark AND (because the scatter is biased
+  //                up-left) pushed it down-right of centre, clipping it.
   const box = new THREE.Box3();
+  const restBox = new THREE.Box3();
   for (const c of core) {
     c.geometry.computeBoundingBox();
-    if (c.geometry.boundingBox) box.union(c.geometry.boundingBox);
+    if (c.geometry.boundingBox) {
+      box.union(c.geometry.boundingBox);
+      restBox.union(c.geometry.boundingBox);
+    }
   }
   const half = new THREE.Vector3();
   for (const p of pixelsFull) {
@@ -239,27 +256,39 @@ function buildMark(): Mark {
     const pb = p.geometry.boundingBox;
     if (!pb) continue;
     pb.getSize(half).multiplyScalar(0.5);
-    // rest extent
-    box.expandByPoint(
-      new THREE.Vector3(p.rest.x - half.x, p.rest.y - half.y, 0),
-    );
-    box.expandByPoint(
-      new THREE.Vector3(p.rest.x + half.x, p.rest.y + half.y, 0),
-    );
-    // scattered-start extent
+    // rest extent — counts toward BOTH boxes
+    const rMin = new THREE.Vector3(p.rest.x - half.x, p.rest.y - half.y, 0);
+    const rMax = new THREE.Vector3(p.rest.x + half.x, p.rest.y + half.y, 0);
+    box.expandByPoint(rMin);
+    box.expandByPoint(rMax);
+    restBox.expandByPoint(rMin);
+    restBox.expandByPoint(rMax);
+    // scattered-start extent — preloader box only
     const s = p.rest.clone().add(p.scatter);
     box.expandByPoint(new THREE.Vector3(s.x - half.x, s.y - half.y, 0));
     box.expandByPoint(new THREE.Vector3(s.x + half.x, s.y + half.y, 0));
   }
 
-  const center = new THREE.Vector3();
-  box.getCenter(center);
-  center.z = 0;
-  const size = new THREE.Vector3();
-  box.getSize(size);
-  const maxDim = Math.max(size.x, size.y) || 1;
+  const framing = (b: THREE.Box3) => {
+    const center = new THREE.Vector3();
+    b.getCenter(center);
+    center.z = 0;
+    const size = new THREE.Vector3();
+    b.getSize(size);
+    return { center, normScale: 1 / (Math.max(size.x, size.y) || 1) };
+  };
 
-  return { core, pixels: pixelsFull, center, normScale: 1 / maxDim };
+  const full = framing(box);
+  const rest = framing(restBox);
+
+  return {
+    core,
+    pixels: pixelsFull,
+    center: full.center,
+    normScale: full.normScale,
+    restCenter: rest.center,
+    restNormScale: rest.normScale,
+  };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -297,7 +326,11 @@ function VContent({ variant, reducedMotion, isDark }: VContentProps) {
   const fitFraction = variant === "hero" ? FIT_HERO : FIT_PRELOADER;
   const fitScale = Math.min(viewport.width, viewport.height) * fitFraction;
 
-  const { normScale: N, center: C } = mark;
+  // Hero frames on the tight rest-only box (correctly centred on the visible
+  // mark); the preloader frames on the scatter-inclusive box.
+  const isHero = variant === "hero";
+  const N = isHero ? mark.restNormScale : mark.normScale;
+  const C = isHero ? mark.restCenter : mark.center;
 
   // Dispose the extruded geometry when this instance unmounts.
   useEffect(() => {
@@ -352,7 +385,7 @@ function VContent({ variant, reducedMotion, isDark }: VContentProps) {
         const lerp = Math.min(delta * 2.5, 1);
         root.rotation.y += (targetRotY - root.rotation.y) * lerp;
         root.rotation.x += (targetRotX - root.rotation.x) * lerp;
-        root.position.set(0, Math.sin(t * 0.7) * 0.035 * fit, 0);
+        root.position.set(0, Math.sin(t * 0.7) * 0.025 * fit, 0);
         root.scale.setScalar(fit);
       }
       for (let i = 0; i < mark.pixels.length; i += 1) {
