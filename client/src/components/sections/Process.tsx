@@ -128,55 +128,24 @@ export default function Process() {
   // the LAST step instead of being stuck on step 01 — keeping the columns coherent.
   const displayedIndex = allActive ? processSteps.length - 1 : activeStep;
 
-  // Illustration crossfade: as the active step changes, the incoming image
-  // rises + tilts in with a depth cue while the outgoing one recedes; a light
-  // sheen sweeps across and the spotlight glow pulses. Reduced motion just
-  // hard-swaps. Runs whenever displayedIndex changes.
+  // Illustration transition. Opacity/visibility is owned entirely by React +
+  // CSS (each slot's inline opacity + `transition-opacity`), so the base state
+  // is correct on the very first paint — exactly one image shows, with no
+  // stacking before GSAP runs. GSAP only adds the incoming image's transform
+  // flourish (rise + depth tilt) and a glow pulse, on a SEPARATE inner element,
+  // so it never fights React over opacity. Runs when displayedIndex changes.
   useGSAP(
     () => {
-      const imgs = imageRefs.current;
+      if (reducedMotion) return;
 
-      if (reducedMotion) {
-        imgs.forEach((el, i) => {
-          if (el) gsap.set(el, { autoAlpha: i === displayedIndex ? 1 : 0 });
-        });
-        return;
+      const el = imageRefs.current[displayedIndex];
+      if (el) {
+        gsap.fromTo(
+          el,
+          { scale: 1.08, yPercent: 7, rotateY: -8, transformPerspective: 900 },
+          { scale: 1, yPercent: 0, rotateY: 0, duration: 0.8, ease: "power3.out" },
+        );
       }
-
-      imgs.forEach((el, i) => {
-        if (!el) return;
-        if (i === displayedIndex) {
-          gsap.fromTo(
-            el,
-            {
-              autoAlpha: 0,
-              scale: 1.08,
-              yPercent: 8,
-              rotateY: -9,
-              transformPerspective: 900,
-            },
-            {
-              autoAlpha: 1,
-              scale: 1,
-              yPercent: 0,
-              rotateY: 0,
-              duration: 0.85,
-              ease: "power3.out",
-            },
-          );
-        } else {
-          gsap.to(el, {
-            autoAlpha: 0,
-            scale: 0.92,
-            yPercent: -6,
-            rotateY: 7,
-            transformPerspective: 900,
-            duration: 0.5,
-            ease: "power2.in",
-          });
-        }
-      });
-
       if (glowRef.current) {
         gsap.fromTo(
           glowRef.current,
@@ -316,26 +285,33 @@ export default function Process() {
                 }}
               />
 
-              {/* Stacked illustrations — active one visible, others faded. */}
+              {/* Stacked illustrations. Slot owns opacity (React + CSS
+                  crossfade → correct on first paint, no stacking). Middle
+                  wrapper does the idle CSS float. Inner wrapper is the GSAP
+                  transform target for the enter flourish. */}
               {processSteps.map((step, i) => (
                 <div
                   key={step.id}
-                  ref={(el) => {
-                    imageRefs.current[i] = el;
-                  }}
-                  className="absolute inset-0"
+                  className="pointer-events-none absolute inset-0 transition-opacity duration-700 ease-out"
                   style={{ opacity: i === displayedIndex ? 1 : 0 }}
                 >
                   <div className="flex h-full w-full items-center justify-center motion-safe:animate-float">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={step.image}
-                      width={step.imageWidth}
-                      height={step.imageHeight}
-                      alt={`${step.title} — illustration`}
-                      loading="lazy"
-                      className="max-h-full w-auto max-w-full object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.45)]"
-                    />
+                    <div
+                      ref={(el) => {
+                        imageRefs.current[i] = el;
+                      }}
+                      className="flex h-full w-full items-center justify-center"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={step.image}
+                        width={step.imageWidth}
+                        height={step.imageHeight}
+                        alt={`${step.title} — illustration`}
+                        loading="lazy"
+                        className="max-h-full w-auto max-w-full object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.45)]"
+                      />
+                    </div>
                   </div>
                 </div>
               ))}
