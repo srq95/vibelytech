@@ -5,7 +5,6 @@ import { processSteps } from "@/content/process";
 import { Container } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GradientText } from "@/components/ui/GradientText";
-import { CodeWindow } from "@/components/ui/CodeWindow";
 import { Reveal } from "@/components/ui/Reveal";
 import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -45,6 +44,11 @@ export default function Process() {
   const pinRef = useRef<HTMLDivElement>(null);
   const railFillRef = useRef<HTMLDivElement>(null);
   const lastIndexRef = useRef(0);
+
+  // Right-side illustration stage.
+  const stageRef = useRef<HTMLDivElement>(null);
+  const imageRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const glowRef = useRef<HTMLDivElement>(null);
 
   useGSAP(
     () => {
@@ -123,7 +127,66 @@ export default function Process() {
   // In the fallback the left list shows every step active, so the editor pins to
   // the LAST step instead of being stuck on step 01 — keeping the columns coherent.
   const displayedIndex = allActive ? processSteps.length - 1 : activeStep;
-  const current = processSteps[displayedIndex];
+
+  // Illustration crossfade: as the active step changes, the incoming image
+  // rises + tilts in with a depth cue while the outgoing one recedes; a light
+  // sheen sweeps across and the spotlight glow pulses. Reduced motion just
+  // hard-swaps. Runs whenever displayedIndex changes.
+  useGSAP(
+    () => {
+      const imgs = imageRefs.current;
+
+      if (reducedMotion) {
+        imgs.forEach((el, i) => {
+          if (el) gsap.set(el, { autoAlpha: i === displayedIndex ? 1 : 0 });
+        });
+        return;
+      }
+
+      imgs.forEach((el, i) => {
+        if (!el) return;
+        if (i === displayedIndex) {
+          gsap.fromTo(
+            el,
+            {
+              autoAlpha: 0,
+              scale: 1.08,
+              yPercent: 8,
+              rotateY: -9,
+              transformPerspective: 900,
+            },
+            {
+              autoAlpha: 1,
+              scale: 1,
+              yPercent: 0,
+              rotateY: 0,
+              duration: 0.85,
+              ease: "power3.out",
+            },
+          );
+        } else {
+          gsap.to(el, {
+            autoAlpha: 0,
+            scale: 0.92,
+            yPercent: -6,
+            rotateY: 7,
+            transformPerspective: 900,
+            duration: 0.5,
+            ease: "power2.in",
+          });
+        }
+      });
+
+      if (glowRef.current) {
+        gsap.fromTo(
+          glowRef.current,
+          { opacity: 0.85, scale: 1.12 },
+          { opacity: 0.5, scale: 1, duration: 1.1, ease: "power2.out" },
+        );
+      }
+    },
+    { scope: stageRef, dependencies: [displayedIndex, reducedMotion] },
+  );
 
   return (
     <section
@@ -236,63 +299,46 @@ export default function Process() {
               ))}
             </div>
 
-            {/* ── RIGHT: editor visual ─────────────────────────────────────── */}
-            <div>
-              <div className="flex flex-col gap-6">
-                {/* Step counter + big accent number */}
-                <div className="flex items-center gap-5">
-                  <span
-                    aria-hidden="true"
-                    className="select-none font-sans text-[6rem] font-black leading-none text-gradient opacity-[0.12] transition-all duration-500"
-                  >
-                    {current.index}
-                  </span>
-                  <div className="flex flex-col gap-1">
-                    <span className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-brand-blue">
-                      {current.index}&nbsp;/&nbsp;{String(processSteps.length).padStart(2, "0")}
-                    </span>
-                    <span className="font-sans text-lg font-bold text-foreground transition-all duration-500">
-                      {current.title}
-                    </span>
-                  </div>
-                </div>
+            {/* ── RIGHT: floating illustration (no frame) ──────────────────── */}
+            <div
+              ref={stageRef}
+              className="relative aspect-square w-full lg:aspect-[5/4] lg:scale-[1.15]"
+            >
+              {/* Soft ambient brand glow behind the artwork — not a box. */}
+              <div
+                ref={glowRef}
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-[10%] rounded-full blur-[70px]"
+                style={{
+                  background:
+                    "radial-gradient(circle at center, rgb(var(--brand-glow) / 0.22), transparent 66%)",
+                  opacity: 0.5,
+                }}
+              />
 
-                {/* CodeWindow with subtle brand glow behind it. Keyed on the
-                    active step so its content cross-fades as the step changes. */}
-                <div className="relative">
-                  <div
-                    aria-hidden="true"
-                    className="pointer-events-none absolute -inset-4 -z-10 rounded-3xl bg-brand-gradient opacity-[0.08] blur-2xl"
-                  />
-                  <div
-                    key={displayedIndex}
-                    className="motion-safe:animate-fade-in"
-                  >
-                    <CodeWindow
-                      filename="process.ts"
-                      lines={[
-                        `// ${current.index} — ${current.title}`,
-                        current.code,
-                      ]}
+              {/* Stacked illustrations — active one visible, others faded. */}
+              {processSteps.map((step, i) => (
+                <div
+                  key={step.id}
+                  ref={(el) => {
+                    imageRefs.current[i] = el;
+                  }}
+                  className="absolute inset-0"
+                  style={{ opacity: i === displayedIndex ? 1 : 0 }}
+                >
+                  <div className="flex h-full w-full items-center justify-center motion-safe:animate-float">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={step.image}
+                      width={step.imageWidth}
+                      height={step.imageHeight}
+                      alt={`${step.title} — illustration`}
+                      loading="lazy"
+                      className="max-h-full w-auto max-w-full object-contain drop-shadow-[0_30px_60px_rgba(0,0,0,0.45)]"
                     />
                   </div>
                 </div>
-
-                {/* Step dots navigation indicator */}
-                <div className="flex items-center gap-2" aria-hidden="true">
-                  {processSteps.map((step, i) => (
-                    <span
-                      key={step.id}
-                      className={cn(
-                        "block rounded-full transition-all duration-500",
-                        isActive(i)
-                          ? "h-2 w-6 bg-brand-gradient"
-                          : "h-2 w-2 bg-border",
-                      )}
-                    />
-                  ))}
-                </div>
-              </div>
+              ))}
             </div>
           </div>
         </Container>
